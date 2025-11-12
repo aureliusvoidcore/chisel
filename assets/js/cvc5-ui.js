@@ -308,8 +308,53 @@
 (define-fun post-f ((x Int)) Bool (<= x 10))
 (inv-constraint inv-f pre-f trans-f post-f)
 (check-synth)`;
-    ui.input.value = (kind === 'sygus') ? SY_EX : SMT_EX;
-    if (kind === 'sygus') qs('cvc5-lang').value = 'sygus2';
+  const SR_EX = `(set-logic BV)
+
+(synth-fun inv ((sr0 (_ BitVec 1)) (sr1 (_ BitVec 1)) (past_sr0 (_ BitVec 1)) (past_sr1 (_ BitVec 1)) (past_en (_ BitVec 1)) (past_din (_ BitVec 1))) Bool
+  ((Start Bool) (Term (_ BitVec 1)))
+  ((Start Bool (true false (and Start Start) (or Start Start) (not Start) (= Term Term)))
+   (Term (_ BitVec 1) (sr0 sr1 past_sr0 past_sr1 past_en past_din #b0 #b1))))
+
+(define-fun pre ((sr0 (_ BitVec 1)) (sr1 (_ BitVec 1)) (past_sr0 (_ BitVec 1)) (past_sr1 (_ BitVec 1)) (past_en (_ BitVec 1)) (past_din (_ BitVec 1))) Bool
+  (and (= sr0 #b0) (= sr1 #b0) (= past_sr0 #b0) (= past_sr1 #b0) (= past_en #b0) (= past_din #b0)))
+
+(define-fun trans ((sr0 (_ BitVec 1)) (sr1 (_ BitVec 1)) (past_sr0 (_ BitVec 1)) (past_sr1 (_ BitVec 1)) (past_en (_ BitVec 1)) (past_din (_ BitVec 1))
+                   (sr0_next (_ BitVec 1)) (sr1_next (_ BitVec 1)) (past_sr0_next (_ BitVec 1)) (past_sr1_next (_ BitVec 1)) (past_en_next (_ BitVec 1)) (past_din_next (_ BitVec 1))) Bool
+  (or
+    ;; rstn=0, en=0, din=0
+    (and (= past_en_next #b0) (= past_din_next #b0) (= past_sr0_next #b0) (= past_sr1_next #b0) (= sr0_next #b0) (= sr1_next #b0))
+    ;; rstn=0, en=0, din=1
+    (and (= past_en_next #b0) (= past_din_next #b0) (= past_sr0_next #b0) (= past_sr1_next #b0) (= sr0_next #b0) (= sr1_next #b0))
+    ;; rstn=0, en=1, din=0
+    (and (= past_en_next #b0) (= past_din_next #b0) (= past_sr0_next #b0) (= past_sr1_next #b0) (= sr0_next #b0) (= sr1_next #b0))
+    ;; rstn=0, en=1, din=1
+    (and (= past_en_next #b0) (= past_din_next #b0) (= past_sr0_next #b0) (= past_sr1_next #b0) (= sr0_next #b0) (= sr1_next #b0))
+    ;; rstn=1, en=0, din=0
+    (and (= past_en_next #b0) (= past_din_next #b0) (= past_sr0_next sr0) (= past_sr1_next sr1) (= sr0_next sr0) (= sr1_next sr1))
+    ;; rstn=1, en=0, din=1
+    (and (= past_en_next #b0) (= past_din_next #b1) (= past_sr0_next sr0) (= past_sr1_next sr1) (= sr0_next sr0) (= sr1_next sr1))
+    ;; rstn=1, en=1, din=0
+    (and (= past_en_next #b1) (= past_din_next #b0) (= past_sr0_next sr0) (= past_sr1_next sr1) (= sr0_next sr1) (= sr1_next #b0))
+    ;; rstn=1, en=1, din=1
+    (and (= past_en_next #b1) (= past_din_next #b1) (= past_sr0_next sr0) (= past_sr1_next sr1) (= sr0_next sr1) (= sr1_next #b1))))
+
+(define-fun post ((sr0 (_ BitVec 1)) (sr1 (_ BitVec 1)) (past_sr0 (_ BitVec 1)) (past_sr1 (_ BitVec 1)) (past_en (_ BitVec 1)) (past_din (_ BitVec 1))) Bool
+  (and (or (not (= past_en #b1)) (and (= sr1 past_din) (= sr0 past_sr1)))
+       (or (not (= past_en #b0)) (and (= sr0 past_sr0) (= sr1 past_sr1)))))
+
+(inv-constraint inv pre trans post)
+
+(check-synth)`;
+    if (kind === 'sr') {
+      ui.input.value = SR_EX;
+      qs('cvc5-lang').value = 'sygus2';
+      // Configure options based on args file
+      qs('cvc5-verbose').checked = true;
+      qs('cvc5-extra').value = '--sygus-enum=smart --sygus-simple-sym-break=agg --sygus-min-grammar --sygus-core-connective --sygus-pbe --sygus-abort-size=1000 --sygus-repair-const --sygus-repair-const-timeout=5000 --sygus-inv-templ=post --sygus-eval-unfold=single-bool --output=sygus --stats --stats-internal';
+    } else {
+      ui.input.value = (kind === 'sygus') ? SY_EX : SMT_EX;
+      if (kind === 'sygus') qs('cvc5-lang').value = 'sygus2';
+    }
   }
 
   function wire(){

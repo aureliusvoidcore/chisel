@@ -39,3 +39,7 @@ assert property (safe_handshake);
 (check-sat)
 (get-model)
 ```
+
+### Reference
+
+- <a class="button" href="{{ site.baseurl }}/pages/formal-verification/how-to-verify">How to (formally) verify</a>

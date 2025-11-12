@@ -1,0 +1,2 @@
+ --sygus-enum=smart --sygus-simple-sym-break=agg --sygus-min-grammar --sygus-core-connective --sygus-pbe --sygus-abort-size=1000 --sygus-repair-const --sygus-repair-const-timeout=5000 --sygus-inv-templ=post --sygus-eval-unfold=single-bool --output=sygus --stats --stats-internal --verbose --lang=sygus2 sr2.sy
+

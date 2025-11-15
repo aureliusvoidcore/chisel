@@ -53,3 +53,10 @@ _cvc5_build/
 
 # Node
 node_modules/
+
+# Local build logs and transient outputs
+build_hwcbmc_wasm*.log
+build_cvc5_wasm*.log
+
+# Frontend source maps (avoid leaking debug info)
+cvc5_app/**/*.map

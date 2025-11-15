@@ -1,0 +1,49 @@
+=====================
+
+Finishing integration
+with ebmc
+=====================
+*) Add code freeing memory allocated by the Verilog reader after IC3
+   converted this information into its internal data
+   structure. (Keeping this memory is too expensive for large
+   examples.)
+
+*) Add the ability to specify parameters that control the stand-alone
+   version of IC3
+
+
+=====================================
+Changes of the current implementation
+=====================================
+
+*) Print out more time-frame statistics  (time taken
+   to finish a time frame, average size of inductive clauses,
+   averages size of cubes generalizing bad states etc)
+
+
+*) Implement actual removal of subsumed clauses (currently they are
+   just marked and ignored by the algorithm)
+
+
+====================================
+Improvements of the basic algorithm
+====================================
+
+*) Implement a version of IC3 that combines property strengthening and
+   property relaxation. Combining strenthening and relation allows one
+   to "emulate" an algorithm that employs depth-first search.
+
+
+*) Implement a "dual" IC3 where one over-approximates the set of
+   states from which a bad state is reachable in j transitions (rather
+   than the set of states reachable in j transitions from initial
+   states).
+
+*) Implement the version of IC3 that fixes the problem with
+   convergence rate (by computing reachability of good states breaking
+   induction)
+
+
+
+
+

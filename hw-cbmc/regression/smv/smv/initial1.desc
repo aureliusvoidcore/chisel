@@ -1,0 +1,9 @@
+CORE
+initial1.smv
+
+^\[spec1\] tmp1 = TRUE: PROVED .*$
+^\[spec2\] tmp2 = TRUE: REFUTED$
+^EXIT=10$
+^SIGNAL=0$
+--
+^warning: ignoring

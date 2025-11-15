@@ -1,0 +1,9 @@
+CORE
+smv_ltlspec2.smv
+--bdd
+^EXIT=0$
+^SIGNAL=0$
+^\[spec1\] G F x = 3: PROVED$
+--
+^warning: ignoring
+--

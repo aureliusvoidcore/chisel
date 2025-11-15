@@ -1,0 +1,15 @@
+CORE
+smv_ltlspec_F1.smv
+--bound 10
+^EXIT=10$
+^SIGNAL=0$
+^\[.*\] F x = 0: REFUTED$
+^\[.*\] F x = 1: PROVED up to bound 10$
+^\[.*\] F x = 2: PROVED up to bound 10$
+^\[.*\] F x = 1 & F x = 2: PROVED up to bound 10$
+^\[.*\] F x = 0 & F x = 1: REFUTED$
+^\[.*\] F x = 0 \| F x = 1: PROVED up to bound 10$
+^\[.*\] F x = 0 -> FALSE: PROVED up to bound 10$
+^\[.*\] F x = 1 -> F x = 0: REFUTED$
+--
+^warning: ignoring

@@ -1,0 +1,9 @@
+CORE
+bmc_unsupported_property1.smv
+--bound 1
+^EXIT=10$
+^SIGNAL=0$
+^\[spec1\] EG x = FALSE: FAILURE: property not supported by BMC engine$
+^\[spec2\] G x = FALSE: REFUTED$
+--
+^warning: ignoring

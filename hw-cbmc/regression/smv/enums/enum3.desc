@@ -1,0 +1,9 @@
+CORE
+enum3.smv
+
+^file .* line 7: Expected expression of type `\{ a, b \}', but got expression `c', which is of type `\{ c \}'$
+^EXIT=2$
+^SIGNAL=0$
+--
+^warning: ignoring
+--

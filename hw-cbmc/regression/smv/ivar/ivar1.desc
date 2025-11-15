@@ -1,0 +1,11 @@
+CORE
+ivar1.smv
+--bound 1
+^\[.*\] some_input: REFUTED$
+^\[.*\] !some_input: REFUTED$
+^\[.*\] X some_input: REFUTED$
+^\[.*\] X !some_input: REFUTED$
+^EXIT=10$
+^SIGNAL=0$
+--
+--

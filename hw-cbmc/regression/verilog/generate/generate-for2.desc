@@ -1,0 +1,6 @@
+CORE
+generate-for2.v
+
+^EXIT=0$
+^SIGNAL=0$
+--

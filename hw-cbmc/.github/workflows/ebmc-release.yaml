@@ -1,0 +1,323 @@
+on:
+  push:
+    tags:
+      - 'ebmc-*'
+
+name: Create Release
+
+jobs:
+  get-version-information:
+    name: Get Version Information
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.split-version.outputs._1 }}
+      tag_name: ebmc-${{ steps.split-version.outputs._1 }}
+    steps:
+      - uses: jungwinter/split@v2
+        id: split-ref
+        with:
+          msg: ${{ github.ref }}
+          separator: '/'
+      - uses: jungwinter/split@v2
+        id: split-version
+        with:
+          msg: ${{ steps.split-ref.outputs._2 }}
+          separator: '-'
+
+  perform-draft-release:
+    name: Perform Draft Release
+    runs-on: ubuntu-24.04
+    needs: [get-version-information]
+    outputs:
+      upload_url: ${{ steps.draft_release.outputs.upload_url }}
+      id: ${{ steps.draft_release.outputs.id }}
+    steps:
+      - name: Create draft release
+        id: draft_release
+        uses: actions/create-release@v1
+        env:
+          EBMC_VERSION: ${{ needs.get-version-information.outputs.version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ebmc-${{ env.EBMC_VERSION }}
+          release_name: ebmc-${{ env.EBMC_VERSION }}
+          draft: true
+          prerelease: false
+
+  ubuntu-22_04-package:
+    name: Package amd64 .deb
+    runs-on: ubuntu-22.04
+    needs: [perform-draft-release]
+    outputs:
+      deb_package_name: ${{ steps.create_packages.outputs.deb_package_name }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Fetch dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -yq gcc g++ jq flex bison libxml2-utils ccache
+      - name: Prepare ccache
+        uses: actions/cache@v4
+        with:
+          save-always: true
+          path: /home/runner/.cache
+          key: ${{ runner.os }}-22.04-make-gcc-${{ github.ref }}-${{ github.sha }}-PR
+          restore-keys: ${{ runner.os }}-22.04-make-gcc
+      - name: ccache path
+        run: ccache -p | grep cache_dir
+      - name: Get cadical and minisat
+        run: make -C lib/cbmc/src cadical-download minisat2-download
+      - name: Build with make
+        run: |
+          # -static-libstdc++ is insufficient, owing to varying GLIBC versions
+          make -C src -j4 CXX="ccache g++" LINKFLAGS="-static" MINISAT2=../../minisat-2.2.1 CADICAL=../../cadical
+      - name: Run the ebmc tests with SAT
+        run: make -C regression/ebmc test
+      - name: Run the verilog tests
+        run: make -C regression/verilog test
+      - name: Run the smv tests
+        run: make -C regression/smv test
+      - name: Print ccache stats
+        run: ccache -s
+      - name: Create .deb
+        id: create_packages
+        run: |
+          VERSION=$(echo ${{ github.ref }} | cut -d "/" -f 3 | cut -d "-" -f 2)
+          DIR=ebmc_${VERSION}_amd64
+          mkdir -p ${DIR}/DEBIAN
+          mkdir -p ${DIR}/usr/bin
+          cp src/ebmc/ebmc ${DIR}/usr/bin
+          strip ${DIR}/usr/bin/ebmc
+          cat << EOM > ${DIR}/DEBIAN/control
+          Package: ebmc
+          Version: ${VERSION}
+          Architecture: amd64
+          Maintainer: Daniel Kroening <dkr@amazon.com>
+          Depends:
+          Installed-Size: 6600
+          Homepage: http://www.cprover.org/ebmc/
+          Description: The EBMC Model Checker
+          EOM
+          sudo chown root:root -R ${DIR}
+          # we give -Zxz since older Debian versions do not uncompress zstd
+          dpkg-deb -Zxz -b ${DIR}
+          deb_package_name="$(ls *.deb)"
+          echo "deb_package_path=$PWD/$deb_package_name" >> $GITHUB_OUTPUT
+          echo "deb_package_name=$deb_package_name" >> $GITHUB_OUTPUT
+      - name: Upload binary packages
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.perform-draft-release.outputs.upload_url }}
+          asset_path: ${{ steps.create_packages.outputs.deb_package_path }}
+          asset_name: ${{ steps.create_packages.outputs.deb_package_name }}
+          asset_content_type: application/x-deb
+
+  centos8-package:
+    name: Package x86_64 .rpm
+    runs-on: ubuntu-22.04
+    needs: [perform-draft-release]
+    outputs:
+      rpm_package_name: ${{ steps.create_packages.outputs.rpm_package_name }}
+    container:
+      image: centos:8
+    steps:
+      - name: Install Packages
+        run: |
+          sed -i -e "s|mirrorlist=|#mirrorlist=|g" -e "s|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g" /etc/yum.repos.d/CentOS-Linux-*
+          yum install -y dnf-plugins-core
+          yum config-manager --set-enabled powertools
+          yum -y install make gcc-c++ flex bison git rpmdevtools wget libstdc++-static
+          wget --no-verbose https://github.com/ccache/ccache/releases/download/v4.9.1/ccache-4.9.1-linux-x86_64.tar.xz
+          tar xJf ccache-4.9.1-linux-x86_64.tar.xz
+          cp ccache-4.9.1-linux-x86_64/ccache /usr/bin/
+      - name: cache for ccache
+        uses: actions/cache@v4
+        with:
+          path: /github/home/.cache/ccache
+          save-always: true
+          key: ${{ runner.os }}-centos8-make-gcc-${{ github.ref }}-${{ github.sha }}-PR
+          restore-keys: ${{ runner.os }}-centos8-make-gcc-
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Zero ccache stats and limit in size
+        run: ccache -z --max-size=500M
+      - name: ccache path
+        run: ccache -p | grep cache_dir
+      - name: Get cadical and minisat
+        run: make -C lib/cbmc/src cadical-download minisat2-download
+      - name: Build with make
+        run: |
+          # -static-libstdc++ suffices -- tested on CentOS, Fedora, Amazon Linux
+          make CXX="ccache g++ -Wno-class-memaccess" LIBS="-lstdc++fs" LINKFLAGS="-static-libstdc++" -C src -j4 MINISAT2=../../minisat-2.2.1 CADICAL=../../cadical
+      - name: Print ccache stats
+        run: ccache -s
+      - name: Run the ebmc tests with SAT
+        run: |
+          rm regression/ebmc/neural-liveness/counter1.desc
+          make -C regression/ebmc test
+      - name: Run the verilog tests
+        run: make -C regression/verilog test
+      - name: Run the smv tests
+        run: make -C regression/smv test
+      - name: Create .rpm
+        id: create_packages
+        run: |
+          VERSION=$(echo ${{ github.ref }} | cut -d "/" -f 3 | cut -d "-" -f 2)
+          SRC=`pwd`
+          rpmdev-setuptree
+
+          cat > ~/rpmbuild/SPECS/ebmc.spec << EOM
+          #This is a spec file for ebmc
+
+          Summary:          EBMC Model Checker
+          License:          BSD 3-clause
+          Name:             ebmc
+          Version:          ${VERSION}
+          Release:          1
+          Prefix:           /usr
+          Group:            Development/Tools
+
+          %description
+          EBMC is a formal verification tool for hardware designs.
+
+          %prep
+
+          %build
+
+          %install
+          mkdir %{buildroot}/usr
+          mkdir %{buildroot}/usr/lib
+          mkdir %{buildroot}/usr/bin
+          mkdir %{buildroot}/usr/lib/ebmc
+          cp ${SRC}/src/ebmc/ebmc %{buildroot}/usr/bin/
+          strip %{buildroot}/usr/bin/ebmc
+
+          %files
+          /usr/bin/ebmc
+          EOM
+          echo Building ebmc-${VERSION}-1.x86_64.rpm
+          (cd ~/rpmbuild/SPECS ; rpmbuild -v -bb ebmc.spec )
+          rpm_package_name=ebmc-${VERSION}-1.x86_64.rpm
+          echo "rpm_package_path=$HOME/rpmbuild/RPMS/x86_64/$rpm_package_name" >> $GITHUB_OUTPUT
+          echo "rpm_package_name=$rpm_package_name" >> $GITHUB_OUTPUT
+      - name: Upload binary packages
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.perform-draft-release.outputs.upload_url }}
+          asset_path: ${{ steps.create_packages.outputs.rpm_package_path }}
+          asset_name: ${{ steps.create_packages.outputs.rpm_package_name }}
+          asset_content_type: application/x-rpm
+
+  wasm-package:
+    name: Package wasm
+    runs-on: ubuntu-22.04
+    needs: [perform-draft-release]
+    outputs:
+      wasm_package_name: ${{ steps.create_packages.outputs.wasm_package_name }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Fetch dependencies
+        env:
+          # This is needed in addition to -yq to prevent apt-get from asking for
+          # user input
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -yq flex bison libxml2-utils cpanminus ccache
+      - name: Install emscripten
+        run: |
+          # The emscripten package in Ubuntu is too far behind.
+          git clone https://github.com/emscripten-core/emsdk.git
+          cd emsdk
+          git checkout 3.1.31
+          ./emsdk install latest
+          ./emsdk activate latest
+          source ./emsdk_env.sh
+          emcc --version
+      - name: Prepare ccache
+        uses: actions/cache@v4
+        with:
+          path: /home/runner/.cache
+          save-always: true
+          key: ${{ runner.os }}-24.04-make-emcc-${{ github.ref }}-${{ github.sha }}-PR
+          restore-keys: |
+            ${{ runner.os }}-24.04-make-emcc-${{ github.ref }}
+            ${{ runner.os }}-24.04-make-emcc
+      - name: Zero ccache stats and limit in size
+        run: ccache -z --max-size=500M
+      - name: ccache path
+        run: ccache -p | grep cache_dir
+      - name: Get minisat
+        run: make -C lib/cbmc/src minisat2-download
+      - name: Build with make
+        run: |
+          source emsdk/emsdk_env.sh
+          make -C src -j4 \
+               BUILD_ENV=Unix \
+               CXX="ccache emcc -fwasm-exceptions" \
+               LINKFLAGS="-sEXPORTED_RUNTIME_METHODS=callMain -sALLOW_MEMORY_GROWTH=1" \
+               LINKLIB="emar rc \$@ \$^" \
+               AR="emar" \
+               EXEEXT=".html" \
+               HOSTCXX="ccache g++" \
+               HOSTLINKFLAGS=""
+      - name: print version number via node.js
+        run: node --no-experimental-fetch src/ebmc/ebmc.js --version
+      - name: Create WASM package
+        id: create_packages
+        run: |
+          (cd src/ebmc; tar cvfz ~/ebmc.tgz ebmc.js ebmc.wasm ebmc.html)
+          VERSION=$(echo ${{ github.ref }} | cut -d "/" -f 3 | cut -d "-" -f 2)
+          echo "wasm_package_path=${HOME}/ebmc.tgz" >> $GITHUB_OUTPUT
+          echo "wasm_package_name=ebmc-${VERSION}-wasm.tgz" >> $GITHUB_OUTPUT
+      - name: Print ccache stats
+        run: ccache -s
+      - name: Upload WASM
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.perform-draft-release.outputs.upload_url }}
+          asset_path: ${{ steps.create_packages.outputs.wasm_package_path }}
+          asset_name: ${{ steps.create_packages.outputs.wasm_package_name }}
+          asset_content_type: text/javascript
+
+  perform-release:
+    name: Perform Release
+    runs-on: ubuntu-24.04
+    needs: [ubuntu-22_04-package, centos8-package, wasm-package, get-version-information, perform-draft-release]
+    steps:
+      - name: Publish release
+        env:
+          EBMC_VERSION: ${{ needs.get-version-information.outputs.version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat << EOM > body
+          This is EBMC version ${{ env.EBMC_VERSION }}.
+
+          ## Debian, Ubuntu and derivates
+
+          For Debian and Ubuntu, install EBMC by downloading the *.deb package below and then run
+
+          \`\`\`sh
+          dpkg -i ${{ needs.ubuntu-22_04-package.outputs.deb_package_name }}
+          \`\`\`
+
+          ## Red Hat Linux and derivates
+
+          For Red Hat, CentOS, Fedora, Amazon Linux, install EBMC by downloading the *.rpm package below and then run
+
+          \`\`\`sh
+          rpm -i ${{ needs.centos8-package.outputs.rpm_package_name }}
+          \`\`\`
+          EOM
+          gh release edit ebmc-${{ env.EBMC_VERSION }} --repo ${{ github.repository }} --draft=false --notes-file body

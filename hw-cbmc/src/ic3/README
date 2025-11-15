@@ -1,0 +1,10 @@
+*) This directory contains the code of a model checker that is 
+   a variation of Aaron Bradley's IC3.  It is incorporated into
+   ebmc. To invoke IC3, run
+
+   ebmc verilog_file --ic3 [options]
+
+
+
+  
+

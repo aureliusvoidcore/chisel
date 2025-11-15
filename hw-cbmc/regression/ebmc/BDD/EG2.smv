@@ -1,0 +1,11 @@
+MODULE main
+
+VAR some_var : boolean;
+
+ASSIGN next(some_var) := FALSE;
+
+-- should fail
+SPEC EG some_var = TRUE
+
+-- should fail
+SPEC EG some_var = FALSE

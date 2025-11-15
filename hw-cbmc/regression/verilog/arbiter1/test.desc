@@ -1,0 +1,8 @@
+CORE
+arbiter_change.v
+--bound 5
+^EXIT=0$
+^SIGNAL=0$
+^\[main.property.p1\] .* PROVED up to bound 5$
+--
+^warning: ignoring

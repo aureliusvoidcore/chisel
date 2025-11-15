@@ -1,0 +1,8 @@
+CORE broken-smt-backend
+functioncall3.v
+--module main
+^EXIT=0$
+^SIGNAL=0$
+^UNSAT: .*$
+--
+^warning: ignoring

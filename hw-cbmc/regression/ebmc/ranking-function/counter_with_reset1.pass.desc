@@ -1,0 +1,7 @@
+CORE
+counter_with_reset1.sv
+--property main.p1 --ranking-function 10-counter
+^\[main\.p1\] always s_eventually main.reset \|\| main.counter == 10: PROVED$
+^EXIT=0$
+^SIGNAL=0$
+--

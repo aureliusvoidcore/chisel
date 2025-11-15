@@ -1,0 +1,8 @@
+CORE
+assignment-to-index1.v
+--bound 1
+^EXIT=0$
+^SIGNAL=0$
+^\[top.property.p1\] .* PROVED up to bound 1$
+--
+^warning: ignoring

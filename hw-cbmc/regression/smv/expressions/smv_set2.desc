@@ -1,0 +1,10 @@
+CORE broken-smt-backend
+smv_set2.smv
+
+^\[spec1\] x in \{ 1, 2 \}: REFUTED$
+^\[spec2\] x in 1 \| x in 2: REFUTED$
+^EXIT=10$
+^SIGNAL=0$
+--
+^warning: ignoring
+--

@@ -1,0 +1,8 @@
+CORE
+main.smv
+--bound 10 --trace
+^EXIT=10$
+^SIGNAL=0$
+^\[spec1\] AG x = 1: REFUTED$
+--
+^warning: ignoring

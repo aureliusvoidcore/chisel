@@ -1,0 +1,8 @@
+CORE
+main.smv
+--bound 2
+^EXIT=10$
+^SIGNAL=0$
+^\[spec1\] AG z: REFUTED$
+--
+^warning: ignoring

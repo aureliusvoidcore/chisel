@@ -1,0 +1,129 @@
+# EBMC 5.9
+
+* SMV: word constants
+* SMV: IVAR declarations
+* SMV: bit selection operator
+
+# EBMC 5.8
+
+* AIG/netlist engine: fix for conversion of extract bits operator
+* Verilog: semantic fix for output register ports
+* SystemVerilog: cover sequence
+* SystemVerilog: labeled immediate assert/assume/cover statements
+* SystemVerilog: semantics fix for explicit casts
+
+# EBMC 5.7
+
+* Verilog: --initial-zero changes the default value from nondet to zero
+* Verilog: `elsif preprocessor directive
+* Verilog: fix for named generate blocks
+* Verilog: $onehot and $onehot0 are now elaboration-time constant
+* Verilog: $isunknown
+* Verilog: fix for semantics of assignment contexts
+* SystemVerilog: fix for #-# and #=# for empty matches
+* SystemVerilog: fix for |-> and |=> for empty matches
+* SystemVerilog: ref module port direction
+* LTL/SVA to Buechi with --buechi
+* SMV: abs, bool, count, max, min, toint, word1
+* BMC: new encoding for F, avoiding spurious traces
+* EBMC: verification results now have "result" verbosity level
+* Soundness fix for combination of $past and k-induction
+
+# EBMC 5.6
+
+* SystemVerilog: [*] and [+] SVA operators
+* SystemVerilog: typedefs from package scopes
+* SystemVerilog: assignment patterns with keys for structs
+* SystemVerilog: unbased unsigned literals '0, '1, 'x, 'z
+* SystemVerilog: first_match
+* SystemVerilog: [->n] and [=n]
+* SystemVerilog: within
+* SystemVerilog: bugfix for |-> and |=>
+* SystemVerilog: bugfix for SVA sequence and
+* SystemVerilog: strong/weak sequence semantics
+* Verilog: 'dx, 'dz
+* SMV: LTL V operator, xnor operator
+* SMV: word types and operators
+* --smv-word-level outputs the model as word-level SMV
+
+# EBMC 5.5
+
+* If no engine is given, EBMC now selects an engine heuristically, instead
+  of doing BMC with k=1
+* Verilog: bugfix for $onehot0
+* Verilog: fix for primitive gates with more than two inputs
+* Verilog: Support $past when using AIG-based engines
+* Verilog: fix for nor/nand/xnor primitive gates
+* SystemVerilog: $bitstoreal/$bitstoshortreal, $realtobits/$shortrealtobits
+* SystemVerilog: $itor, $rtoi
+* SystemVerilog: chandle, event, string
+* SystemVerilog: package scope operator
+* SystemVerilog: checkers
+* SystemVerilog: clocking block declarations
+
+# EBMC 5.4
+
+* BMC: Cadical support with --cadical
+* BMC: iterative constraint strengthening is now default;
+  use --bmc-with-assumptions to re-enable the previous algorithm.
+* BMC: support SVA sequence intersect
+* BMC: support SVA sequence throughout
+* SystemVerilog: streaming concatenation {<<{...}} and {>>{...}}
+* SystemVerilog: set membership operator
+* SystemVerilog: named sequences
+* ebmc: --smt-netlist and --dot-netlist now honor --outfile
+
+# EBMC 5.3
+
+* SystemVerilog: fix for nets implicitly declared for port connections
+* SystemVerilog: $typename
+* SystemVerilog: SVA [*n]
+* Verilog: allow indexed part select
+* word-level BMC: fix for F/s_eventually and U/s_until
+* IC3: liveness to safety translation
+* Assumptions are not disabled when using --property
+
+# EBMC 5.2
+
+* SystemVerilog: defines can now be set on the command line
+* SystemVerilog: improvements to elaboration-time constant folding
+* SystemVerilog: continuous assignments to variables
+* SystemVerilog: additional SVA operators
+* SystemVerilog: wildcard equality and inequality operators
+* SystemVerilog: restrict
+* word-level BMC supports full LTL
+* SMV: LTL U and R
+* SMV: ?: operator
+
+# EBMC 5.1
+
+* SVA abort properties and disable iff
+* $countones
+* fix for SVA 'and' and 'or', and sequence implication
+* SystemVerilog: compound blocking assignments
+* SystemVerilog: endmodule identifiers
+* SMV: fix for arithmetic on range types that start from non-zero
+* SMV: CTL operators AR, ER, AU, EU
+
+# EBMC 5.0
+
+* Major revision of the SystemVerilog frontend, extending the support for SVA
+* CTL model checking with BDDs
+* Added a Homebrew formula
+* WASM build
+* Fix for AIG-based engine
+* SystemVerilog: $low, $high, $increment, $left, $right
+* SystemVerilog: $stable, $rose, $fell, $changed, $past
+* SystemVerilog named properties
+* SystemVerilog: fix for always_comb
+* SystemVerilog: size casts
+* SystemVerilog: cover properties
+* SystemVerilog: enums
+* SystemVerilog: added all integer types
+* Verilog: parameter ports
+* --json-modules
+* structs, unions
+* SVA followed-by operators, SVA if, indexed nexttime
+* random trace generation
+* SMV identifier syntax fix
+* SMV: LTLSPEC

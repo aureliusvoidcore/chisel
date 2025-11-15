@@ -1,0 +1,9 @@
+CORE
+bmc_unsupported_property3.smv
+--aig
+^EXIT=10$
+^SIGNAL=0$
+^\[spec1\] !G x = FALSE: FAILURE: property not supported by netlist BMC engine$
+^\[spec2\] G x = FALSE: REFUTED$
+--
+^warning: ignoring

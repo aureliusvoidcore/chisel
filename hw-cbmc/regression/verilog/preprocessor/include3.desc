@@ -1,0 +1,7 @@
+CORE
+include3.v
+--preprocess
+^file include3.v line 2: preprocessor directive inside `include directive$
+^EXIT=1$
+^SIGNAL=0$
+--

@@ -1,0 +1,10 @@
+CORE
+assignment-with-function-call1.sv
+--bound 0
+^\[top\.assert\.1\] .* PROVED .*$
+^\[top\.assert\.2\] .* PROVED .*$
+^\[top\.assert\.3\] .* PROVED .*$
+^EXIT=0$
+^SIGNAL=0$
+--
+^warning: ignoring

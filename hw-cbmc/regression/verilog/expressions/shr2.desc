@@ -1,0 +1,9 @@
+CORE
+shr2.v
+
+^file .* line 4: operand 1\.1 must be integral$
+^EXIT=2$
+^SIGNAL=0$
+--
+^warning: ignoring
+--

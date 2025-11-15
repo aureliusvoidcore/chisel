@@ -1,0 +1,9 @@
+CORE
+xnor3.sv
+
+^\[main\.xnor_ok\] always main\.xnor_in1 ~\^ main\.xnor_in2 == main\.xnor_out: PROVED .*$
+^EXIT=0$
+^SIGNAL=0$
+--
+^warning: ignoring
+--

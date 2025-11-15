@@ -1,0 +1,10 @@
+CORE
+GF1.smv
+--bdd
+^\[spec1\] G F some_var: REFUTED$
+^EXIT=10$
+^SIGNAL=0$
+--
+^warning: ignoring
+--
+Wrong result by BDD engine.

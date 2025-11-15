@@ -1,0 +1,9 @@
+CORE
+return1.sv
+
+^file .* line 4: synthesis of return not supported$
+^EXIT=2$
+^SIGNAL=0$
+--
+^warning: ignoring
+--

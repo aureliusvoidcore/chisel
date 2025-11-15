@@ -1,0 +1,9 @@
+CORE
+main.smv
+--bound 10 --property spec2
+^EXIT=0$
+^SIGNAL=0$
+^\[spec2\] .* PROVED up to bound 10$
+--
+^warning: ignoring
+$\[spec1\] .*$

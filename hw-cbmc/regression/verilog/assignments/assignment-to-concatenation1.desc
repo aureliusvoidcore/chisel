@@ -1,0 +1,9 @@
+CORE
+assignment-to-concatenation1.v
+--bound 1
+^EXIT=0$
+^SIGNAL=0$
+^\[main.property.property1\] .* PROVED up to bound 1$
+^\[main.property.property2\] .* PROVED up to bound 1$
+--
+^warning: ignoring

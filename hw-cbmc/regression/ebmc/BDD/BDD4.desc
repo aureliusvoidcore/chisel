@@ -1,0 +1,8 @@
+CORE
+BDD4.smv
+--bdd
+^EXIT=10$
+^SIGNAL=0$
+^\[spec1\] AG .*: REFUTED$
+--
+^warning: ignoring

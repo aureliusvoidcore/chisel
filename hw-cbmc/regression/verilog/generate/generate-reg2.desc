@@ -1,0 +1,6 @@
+CORE
+generate-reg2.v
+--module main
+^EXIT=0$
+^SIGNAL=0$
+--

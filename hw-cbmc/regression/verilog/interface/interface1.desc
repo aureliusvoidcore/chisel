@@ -1,0 +1,7 @@
+CORE
+interface1.sv
+--show-parse
+^Interface: myInterface$
+^EXIT=0$
+^SIGNAL=0$
+--

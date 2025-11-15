@@ -1,0 +1,6 @@
+CORE
+parameter_ports1.v
+
+^EXIT=0$
+^SIGNAL=0$
+--

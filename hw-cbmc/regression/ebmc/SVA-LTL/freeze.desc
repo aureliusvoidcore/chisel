@@ -1,0 +1,9 @@
+CORE
+freeze.sv
+--bound 1
+^\[main\.p1\] always s_eventually main\.w: REFUTED$
+^\[main\.p2\] always s_eventually !main\.w: REFUTED$
+^EXIT=10$
+^SIGNAL=0$
+--
+--

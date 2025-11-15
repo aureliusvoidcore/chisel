@@ -1,0 +1,8 @@
+CORE
+multi-line-define1.v
+--preprocess
+^A B C$
+^EXIT=0$
+^SIGNAL=0$
+--
+^PREPROCESSING FAILED$

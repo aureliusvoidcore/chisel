@@ -1,0 +1,8 @@
+CORE
+smv1.smv
+--bdd
+^EXIT=0$
+^SIGNAL=0$
+^\[spec1\] .* PROVED$
+--
+^warning: ignoring

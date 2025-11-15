@@ -1,0 +1,9 @@
+CORE
+error_first_line1.v
+
+
+^file error_first_line1.v line 1: syntax error
+^EXIT=1$
+^SIGNAL=0$
+--
+--

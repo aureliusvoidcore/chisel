@@ -1,0 +1,7 @@
+CORE
+wire_bits.v
+
+^EXIT=0$
+^SIGNAL=0$
+--
+^warning: ignoring

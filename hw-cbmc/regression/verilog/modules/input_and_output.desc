@@ -1,0 +1,8 @@
+CORE
+input_and_output.v
+
+^file .* line 4: port `x' is alrady declared$
+^EXIT=2$
+^SIGNAL=0$
+--
+--

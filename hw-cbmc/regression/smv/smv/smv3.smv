@@ -1,0 +1,7 @@
+MODULE main
+
+DEFINE xx:=yy;
+
+DEFINE yy:=TRUE;
+
+SPEC AG xx

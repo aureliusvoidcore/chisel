@@ -1,0 +1,6 @@
+CORE
+main.v
+--module main --bound 20
+^EXIT=0$
+^SIGNAL=0$
+--

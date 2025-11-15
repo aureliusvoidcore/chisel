@@ -1,0 +1,9 @@
+CORE
+main.v
+--module main --bound 20 -I subdir --trace
+^EXIT=10$
+^SIGNAL=0$
+^Counterexample:$
+^\[main.property.property1\] always main.x != 10: REFUTED$
+--
+^warning: ignoring

@@ -1,0 +1,8 @@
+CORE
+nested_case1.v
+
+^EXIT=0$
+^SIGNAL=0$
+^\[main.property.p1\] .* PROVED .*$
+--
+^warning: ignoring

@@ -1,0 +1,6 @@
+CORE
+ring_buffer.sv
+--bdd
+PROVED$
+^EXIT=0$
+^SIGNAL=0$

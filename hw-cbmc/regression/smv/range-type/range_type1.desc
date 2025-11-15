@@ -1,0 +1,8 @@
+CORE
+range_type1.smv
+--bound 10
+^EXIT=0$
+^SIGNAL=0$
+^\[p1\] AG x != 4: PROVED up to bound 10$
+--
+^warning: ignoring

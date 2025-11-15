@@ -1,0 +1,17 @@
+CORE broken-smt-backend
+elbtunnel.aig.smv
+--bound 12
+^EXIT=10$
+^SIGNAL=0$
+^\[spec1\] .* REFUTED$
+^\[spec2\] .* PROVED up to bound 12$
+^\[spec3\] .* REFUTED$
+^\[spec4\] .* REFUTED$
+^\[spec5\] .* PROVED up to bound 12$
+^\[spec6\] .* PROVED up to bound 12$
+^\[spec7\] .* REFUTED$
+^\[spec8\] .* REFUTED$
+--
+^warning: ignoring
+--
+The test fails in MacOS CI with Z3.

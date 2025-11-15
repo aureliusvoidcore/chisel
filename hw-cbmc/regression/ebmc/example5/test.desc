@@ -1,0 +1,6 @@
+CORE
+example5.sv
+--bound 10
+PROVED up to bound 10$
+^EXIT=0$
+^SIGNAL=0$

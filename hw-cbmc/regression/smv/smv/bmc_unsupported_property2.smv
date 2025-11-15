@@ -1,0 +1,9 @@
+MODULE main
+
+VAR x : boolean;
+
+ASSIGN init(x) := TRUE;
+ASSIGN next(x) := x;
+
+SPEC EG x=FALSE -- unsupported
+LTLSPEC G x=TRUE -- should pass

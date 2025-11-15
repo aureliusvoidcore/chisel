@@ -1,0 +1,9 @@
+CORE
+or1.sv
+
+^EXIT=10$
+^SIGNAL=0$
+--
+^warning: ignoring
+--
+Replicates https://github.com/diffblue/hw-cbmc/issues/880

@@ -1,0 +1,12 @@
+CORE broken-smt-backend
+waveform1.smv
+--bound 20 --numbered-trace
+^EXIT=10$
+^SIGNAL=0$
+^\[spec1\] .* REFUTED$
+^Counterexample with 21 states:$
+^y@0 = 0$
+^y@10 = 100$
+^y@20 = 200$
+--
+^warning: ignoring

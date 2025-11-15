@@ -1,0 +1,8 @@
+CORE
+example4.sv
+--bound 10 --trace
+^\[counter\.assert\.1\] .* PROVED up to bound 10$
+^\[counter\.assert\.2\] .* REFUTED$
+^  counter\.state = \d+ \([01]+\)$
+^EXIT=10$
+^SIGNAL=0$

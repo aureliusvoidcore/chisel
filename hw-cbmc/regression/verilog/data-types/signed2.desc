@@ -1,0 +1,6 @@
+CORE
+signed2.sv
+
+^EXIT=0$
+^SIGNAL=0$
+--

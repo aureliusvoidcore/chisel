@@ -1,0 +1,309 @@
+---
+layout: default
+title: HW-CBMC (EBMC) – Web Harness
+permalink: /pages/formal-verification/hwcbmc
+---
+
+<link rel="stylesheet" href="{{ site.baseurl }}/assets/css/cvc5.css">
+
+<h2>HW-CBMC / EBMC – Browser Model Checking</h2>
+<p class="meta">Run EBMC (Enhanced Bounded Model Checking) on Verilog/VHDL directly in your browser using a WebAssembly build of hw-cbmc.</p>
+
+<div class="cvc5-wrap">
+	<div class="cvc5-col">
+		<div class="cvc5-card">
+			<h3>Design Input</h3>
+			<div class="cvc5-row">
+				<label class="button" style="cursor:pointer;">
+					Upload HDL<input id="hwcbmc-file" type="file" accept=".v,.sv,.svh,.vhd,.vhdl" style="display:none;" />
+				</label>
+				<span id="hwcbmc-file-name" class="cvc5-status"></span>
+				<button id="hwcbmc-load-example" class="button" title="Load a small SystemVerilog example into the editor">Load example</button>
+			</div>
+			<!-- Use the site-wide editorify/CodeMirror editor instead of a bespoke textarea -->
+			<pre><code class="language-verilog" aria-label="HDL editor" data-editor="main">
+// Paste Verilog/SystemVerilog/VHDL source here…
+// Tip: Use the Upload button above or Load example to populate this editor.
+                </code></pre>
+		</div>
+
+		<div class="cvc5-card">
+			<h3>Engine &amp; Bounds</h3>
+			<div class="cvc5-row">
+				<label for="hwcbmc-bound">Bound</label>
+				<input id="hwcbmc-bound" type="number" min="1" value="10" />
+			</div>
+			<div class="cvc5-row">
+				<label for="hwcbmc-top">Top module</label>
+				<input id="hwcbmc-top" type="text" placeholder="e.g., top" />
+			</div>
+
+			<h4>Methods</h4>
+			<div class="cvc5-row cvc5-row--wrap">
+				<label class="cp-checkbox">
+					<input type="radio" name="hwcbmc-method" value="bmc" checked />
+					<span>BMC (default)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input type="radio" name="hwcbmc-method" value="k-induction" />
+					<span>k‑Induction (<code>--k-induction</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input type="radio" name="hwcbmc-method" value="bdd" />
+					<span>BDD engine (<code>--bdd</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input type="radio" name="hwcbmc-method" value="ic3" />
+					<span>IC3 (<code>--ic3</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input type="radio" name="hwcbmc-method" value="random-traces" />
+					<span>Random traces (<code>--random-traces</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input type="radio" name="hwcbmc-method" value="random-trace" />
+					<span>Random single trace (<code>--random-trace</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input type="radio" name="hwcbmc-method" value="random-waveform" />
+					<span>Random waveform (<code>--random-waveform</code>)</span>
+				</label>
+			</div>
+
+			<div class="cvc5-row">
+				<label for="hwcbmc-rand-traces">Traces</label>
+				<input id="hwcbmc-rand-traces" type="number" min="1" value="1" />
+			</div>
+			<div class="cvc5-row">
+				<label for="hwcbmc-rand-seed">Random seed</label>
+				<input id="hwcbmc-rand-seed" type="number" min="0" value="0" />
+			</div>
+			<div class="cvc5-row">
+				<label for="hwcbmc-trace-steps">Trace steps</label>
+				<input id="hwcbmc-trace-steps" type="number" min="1" value="10" />
+			</div>
+
+			<h4>Tracing &amp; Output</h4>
+			<div class="cvc5-row cvc5-row--wrap">
+				<label class="cp-checkbox">
+					<input id="hwcbmc-trace" type="checkbox" checked />
+					<span>Counterexample trace (<code>--trace</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input id="hwcbmc-waveform" type="checkbox" />
+					<span>Waveform (<code>--waveform</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input id="hwcbmc-vcd" type="checkbox" />
+					<span>VCD dump (<code>--vcd &lt;file&gt;</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input id="hwcbmc-numbered-trace" type="checkbox" />
+					<span>Numbered trace (<code>--numbered-trace</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input id="hwcbmc-show-props" type="checkbox" />
+					<span>List properties (<code>--show-properties</code>)</span>
+				</label>
+			</div>
+			<div class="cvc5-row">
+				<label for="hwcbmc-vcd-file">VCD filename</label>
+				<input id="hwcbmc-vcd-file" type="text" placeholder="trace.vcd" />
+			</div>
+			<div class="cvc5-row">
+				<label for="hwcbmc-json-result">JSON result file</label>
+				<input id="hwcbmc-json-result" type="text" placeholder="result.json" />
+			</div>
+			<div class="cvc5-row">
+				<label for="hwcbmc-json-props">JSON properties file</label>
+				<input id="hwcbmc-json-props" type="text" placeholder="props.json" />
+			</div>
+
+			<h4>Liveness handling</h4>
+			<div class="cvc5-row cvc5-row--wrap">
+				<label class="cp-checkbox">
+					<input id="hwcbmc-l2s" type="checkbox" />
+					<span>Liveness → safety (<code>--liveness-to-safety</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input id="hwcbmc-buechi" type="checkbox" />
+					<span>Büchi automaton (<code>--buechi</code>)</span>
+				</label>
+			</div>
+
+			<h4>Properties</h4>
+			<div class="cvc5-row"><label for="hwcbmc-prop-expr">Property expression (-p)</label>
+				<input id="hwcbmc-prop-expr" type="text" placeholder="e.g., G (req -> F ack)" />
+			</div>
+			<div class="cvc5-row"><label for="hwcbmc-prop-id">Property ID (--property)</label>
+				<input id="hwcbmc-prop-id" type="text" placeholder="e.g., p0" />
+			</div>
+
+			<h4>Verilog frontend</h4>
+			<div class="cvc5-row cvc5-row--wrap">
+				<label class="cp-checkbox">
+					<input id="hwcbmc-systemverilog" type="checkbox" />
+					<span>SystemVerilog frontend (<code>--systemverilog</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input id="hwcbmc-ignore-initial" type="checkbox" />
+					<span>Ignore <code>initial</code> blocks (<code>--ignore-initial</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input id="hwcbmc-initial-zero" type="checkbox" />
+					<span>Init regs to zero (<code>--initial-zero</code>)</span>
+				</label>
+			</div>
+			<div class="cvc5-row"><label for="hwcbmc-incpaths">Include paths (-I)</label>
+				<input id="hwcbmc-incpaths" type="text" placeholder="/inc/dir1,/inc/dir2" />
+			</div>
+			<div class="cvc5-row"><label for="hwcbmc-defines">Defines (-D)</label>
+				<input id="hwcbmc-defines" type="text" placeholder="FOO=1,BAR" />
+			</div>
+			<div class="cvc5-row"><label for="hwcbmc-reset">Reset expr (--reset)</label>
+				<input id="hwcbmc-reset" type="text" placeholder="rst=1'b1" />
+			</div>
+
+			<h4>Debug / Solver output</h4>
+			<div class="cvc5-row cvc5-row--wrap">
+				<label class="cp-checkbox">
+					<input id="hwcbmc-show-netlist" type="checkbox" />
+					<span>Show netlist (<code>--show-netlist</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input id="hwcbmc-show-formula" type="checkbox" />
+					<span>Show formula (<code>--show-formula</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input id="hwcbmc-show-trans" type="checkbox" />
+					<span>Show transition system (<code>--show-trans</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input id="hwcbmc-preprocess" type="checkbox" />
+					<span>Preprocess (<code>--preprocess</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input id="hwcbmc-show-parse" type="checkbox" />
+					<span>Show parse (<code>--show-parse</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input id="hwcbmc-show-modules" type="checkbox" />
+					<span>Show modules (<code>--show-modules</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input id="hwcbmc-show-hierarchy" type="checkbox" />
+					<span>Show module hierarchy (<code>--show-module-hierarchy</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input id="hwcbmc-show-varmap" type="checkbox" />
+					<span>Show varmap (<code>--show-varmap</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input id="hwcbmc-show-ldg" type="checkbox" />
+					<span>Show latch dependencies (<code>--show-ldg</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input id="hwcbmc-smv-netlist" type="checkbox" />
+					<span>SMV netlist (<code>--smv-netlist</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input id="hwcbmc-dot-netlist" type="checkbox" />
+					<span>DOT netlist (<code>--dot-netlist</code>)</span>
+				</label>
+				<label class="cp-checkbox">
+					<input id="hwcbmc-smv-word-level" type="checkbox" />
+					<span>SMV word-level (<code>--smv-word-level</code>)</span>
+				</label>
+			</div>
+			<div class="cvc5-row"><label for="hwcbmc-outfile">Output file (--outfile)</label>
+				<input id="hwcbmc-outfile" type="text" placeholder="output.txt (for SMV/DOT/trans)" />
+			</div>
+
+			<h4>Solvers / Formula output</h4>
+			<div class="cvc5-row cvc5-row--wrap">
+				<label class="cp-checkbox"><input id="hwcbmc-aig" type="checkbox" /><span>AIG SAT (<code>--aig</code>)</span></label>
+				<label class="cp-checkbox"><input id="hwcbmc-dimacs" type="checkbox" /><span>DIMACS (<code>--dimacs</code>)</span></label>
+				<label class="cp-checkbox"><input id="hwcbmc-smt2" type="checkbox" /><span>SMT-LIB v2 (<code>--smt2</code>)</span></label>
+			</div>
+			<p class="meta">Note: External solvers (<code>--boolector</code>, <code>--cvc4</code>, <code>--mathsat</code>, <code>--yices</code>, <code>--z3</code>) are not linked in the WebAssembly build.</p>
+
+			<h4>Advanced (experimental)</h4>
+			<div class="cvc5-row cvc5-row--wrap">
+				<label class="cp-checkbox"><input id="hwcbmc-neural" type="checkbox" /><span>Neural liveness (<code>--neural-liveness</code>)</span></label>
+			</div>
+			<div class="cvc5-row"><label for="hwcbmc-neural-engine">Neural engine (--neural-engine)</label>
+				<input id="hwcbmc-neural-engine" type="text" placeholder="engine command" />
+			</div>
+			<div class="cvc5-row cvc5-row--wrap">
+				<label class="cp-checkbox"><input id="hwcbmc-ranking" type="checkbox" /><span>Ranking function (<code>--ranking-function</code>)</span></label>
+			</div>
+			<div class="cvc5-row"><label for="hwcbmc-ranking-file">Ranking function file</label>
+				<input id="hwcbmc-ranking-file" type="text" placeholder="ranking.fun" />
+			</div>
+			<div class="cvc5-row"><label for="hwcbmc-ranking-text">Ranking function content</label>
+				<textarea id="hwcbmc-ranking-text" class="cvc5-textarea" placeholder="Optional: content to write to ranking.fun"></textarea>
+			</div>
+			<div class="cvc5-row"><label for="hwcbmc-ranking-prop">Ranking property ID</label>
+				<input id="hwcbmc-ranking-prop" type="text" placeholder="e.g., p0" />
+			</div>
+
+			<div class="cvc5-row">
+				<label for="hwcbmc-verbosity">Verbosity</label>
+				<input id="hwcbmc-verbosity" type="number" min="0" max="10" value="5" />
+			</div>
+
+			<div class="cvc5-row">
+				<label for="hwcbmc-extra">Extra EBMC flags</label>
+				<input id="hwcbmc-extra" type="text" placeholder="e.g., --property p0" />
+			</div>
+
+			<div class="cvc5-row">
+				<button id="hwcbmc-run" class="button button-primary">Run EBMC</button>
+				<button id="hwcbmc-show-help" class="button">Show CLI help</button>
+				<button id="hwcbmc-quick-test" class="button" title="Run EBMC on the built-in shift-register example using SystemVerilog and reset ~rstn">Quick test (sr.sv)</button>
+			</div>
+		</div>
+		
+	</div>
+
+	<div class="cvc5-col">
+		<div class="cvc5-card">
+			<h3>Status</h3>
+			<pre id="hwcbmc-status" class="cvc5-pre">Initializing HW-CBMC…</pre>
+		</div>
+
+		<div class="cvc5-card">
+			<h3>Results</h3>
+			<div class="cvc5-row">
+				<button id="hwcbmc-copy-output" class="button">Copy</button>
+				<button id="hwcbmc-clear-output" class="button">Clear</button>
+			</div>
+			<pre id="hwcbmc-output" class="cvc5-pre" style="min-height: 120px"></pre>
+		</div>
+
+		<div class="cvc5-card">
+			<h3>Console</h3>
+			<div class="cvc5-row">
+				<button id="hwcbmc-clear" class="button">Clear</button>
+				<button id="hwcbmc-download-log" class="button">Download log</button>
+			</div>
+			<pre id="hwcbmc-log" class="cvc5-pre"></pre>
+		</div>
+
+		<div class="cvc5-card">
+			<h3>Artifacts (VCD, JSON, …)</h3>
+			<div class="cvc5-row">
+				<button id="hwcbmc-list" class="button">List FS</button>
+				<input id="hwcbmc-artifact" type="text" placeholder="e.g., trace.vcd, result.json" />
+				<button id="hwcbmc-download" class="button">Download</button>
+			</div>
+			<pre id="hwcbmc-files" class="cvc5-pre" style="min-height: 80px"></pre>
+			<p class="meta">Tip: set the JSON result filename above to get a machine‑readable verification summary (e.g., <code>result.json</code>).</p>
+		</div>
+	</div>
+</div>
+
+<script src="{{ site.baseurl }}/hwcbmc_build/hwcbmc.js?v=20251115a"></script>
+<script src="{{ site.baseurl }}/hwcbmc_build/hwcbmc-wrapper.js?v=20251115a"></script>
+<script>window.__siteBaseUrl = '{{ site.baseurl }}';</script>
+<script src="{{ site.baseurl }}/assets/js/hwcbmc-ui.js?v=20251115a"></script>

@@ -58,3 +58,18 @@ Notes
 	- Pages: `pages/`
 	- Posts: `_posts/`
 
+## WebAssembly integrations
+
+This site includes in-browser interfaces for formal tools compiled to WebAssembly:
+
+- ABC (Berkeley) – `/pages/formal-verification/abc` (artifacts in `abc_build/`)
+- CVC5 – `/pages/formal-verification/cvc5` (artifacts in `assets/cvc5/`)
+- HW-CBMC (experimental) – `/pages/formal-verification/hwcbmc` (artifacts in `hwcbmc_build/`)
+
+To build HW-CBMC for WASM locally (experimental), see:
+
+- `scripts/build_hwcbmc_wasm.sh` – attempts an Emscripten build and places outputs in `hwcbmc_build/`
+- `scripts/verify_hwcbmc_assets.sh` – checks that `hwcbmc.js`/`.wasm` and the wrapper are present
+
+Note: HW-CBMC depends on CBMC and various libraries; a browser-targeted build may require patching or disabling unsupported features. The UI expects a modularized Emscripten module exported as `HWCBMCModule`.
+

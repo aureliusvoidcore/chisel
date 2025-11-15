@@ -11,6 +11,7 @@ This section collects property specifications, model checking workflows, and SAT
 
 - CVC5 Web (WASM): <a class="button" href="{{ site.baseurl }}/pages/formal-verification/cvc5">Open Advanced Interface</a>
  - ABC Web (WASM): <a class="button" href="{{ site.baseurl }}/pages/formal-verification/abc">Open Formal Harness (PDR/BMC/CEC)</a>
+ - HW-CBMC Web (WASM): <a class="button" href="{{ site.baseurl }}/pages/formal-verification/hwcbmc">Open BMC for Verilog</a>
 
 ### Local LLM (Browser, CPU-only)
 

@@ -1,10 +1,11 @@
 /* Minimal layout for cvc5 UI */
-.cvc5-wrap{ display:grid; grid-template-columns: 1.2fr 1fr; gap: 14px; }
+.cvc5-wrap{ display:grid; grid-template-columns: 1.1fr 1fr; gap: 12px; max-width: 1160px; margin: 0 auto; }
 @media (max-width: 980px){ .cvc5-wrap{ grid-template-columns: 1fr; } }
 .cvc5-card{ border: 1px solid var(--border); border-radius: 12px; padding: 12px; background: rgba(0, 15, 18, 0.5); box-shadow: var(--glow-box); }
 .cvc5-col{ display:flex; flex-direction:column; gap: 12px; }
-.cvc5-row{ display:flex; gap: 10px; align-items:center; }
-.cvc5-row label{ min-width: 150px; }
+.cvc5-row{ display:flex; gap: 10px; align-items:center; flex-wrap: wrap; }
+.cvc5-row label{ min-width: 130px; }
+.cvc5-row input[type="text"], .cvc5-row input[type="number"], .cvc5-row textarea{ flex: 1 1 260px; }
 .cvc5-actions{ display:flex; gap: 10px; flex-wrap: wrap; }
 .cvc5-textarea{ width:100%; min-height: 320px; background:#040607; color: var(--text); border:1px solid var(--border); border-radius: 8px; padding:10px; font-family: ui-monospace, Menlo, monospace; }
 .cvc5-pre{ white-space: pre-wrap; background:#040607; color: var(--text); border:1px solid var(--border); border-radius: 8px; padding:10px; min-height: 120px; }

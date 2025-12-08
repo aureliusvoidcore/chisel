@@ -12,6 +12,14 @@
   --border: rgba(0,255,200,0.35);
   --glow-text: 0 0 10px #00ffff, 0 0 18px rgba(0,255,255,0.8);
   --glow-box: 0 0 6px rgba(0,255,136,0.8), 0 0 18px rgba(0,255,136,0.4);
+  /* Alien / cyberpunk Christmas accent colors */
+  --xmas-alien-green: #00ff88;
+  --xmas-alien-red: #ff3366;
+  --xmas-alien-gold: #ffd166;
+  --xmas-alien-purple: #a855ff;
+  --xmas-aurora-teal: #3bfffb;
+  --xmas-aurora-violet: #c084fc;
+  --xmas-aurora-lime: #b9ff66;
 }
 
 /* Mode variables */
@@ -236,6 +244,159 @@ body.theme-doom .doom-canvas{ display:block; }
 main { position: relative; z-index: 1; }
 
 /* Theme presets */
+/* Default: Alien / Cyberpunk Christmas (strongly distinct) */
+@keyframes aurora-shift {
+  0% { background-position: 50% 0%, 10% 0%, 90% 0%, 50% 100%; }
+  25% { background-position: 45% 5%, 15% -5%, 85% 5%, 50% 100%; }
+  50% { background-position: 50% 0%, 20% 0%, 80% 0%, 50% 100%; }
+  75% { background-position: 55% 5%, 15% 5%, 85% -5%, 50% 100%; }
+  100% { background-position: 50% 0%, 10% 0%, 90% 0%, 50% 100%; }
+}
+
+body.theme-alien-xmas {
+  --bg-base: #000105;
+  --bg-lighten: 0%;
+  --neon-blue: #5ef1ff;
+  --neon-green: var(--xmas-alien-green);
+  --neon-pink: var(--xmas-alien-red);
+  --text: #e0fff4;
+  --muted: #94ffdb;
+  --border: rgba(94, 241, 255, 0.5);
+  --glow-text: 0 0 12px rgba(94,241,255,0.8), 0 0 24px rgba(168,85,255,0.6);
+  --glow-box: 0 0 15px rgba(0,255,136,0.5), 0 0 30px rgba(94,241,255,0.3);
+  background:
+    radial-gradient(1600px 600px at 50% -10%, color-mix(in srgb, var(--xmas-aurora-teal) 50%, transparent), transparent 60%),
+    radial-gradient(1400px 800px at 10% -20%, color-mix(in srgb, var(--xmas-aurora-violet) 40%, transparent), transparent 60%),
+    radial-gradient(1400px 800px at 90% -20%, color-mix(in srgb, var(--xmas-alien-green) 35%, transparent), transparent 60%),
+    linear-gradient(to bottom, #00030a 0%, #010510 100%);
+  background-size: 200% 200%;
+  animation: aurora-shift 20s ease-in-out infinite;
+}
+body.theme-alien-xmas .site-header {
+  padding-top: 60px;
+  padding-bottom: 40px;
+}
+body.theme-alien-xmas .site-title,
+body.theme-alien-xmas h1,
+body.theme-alien-xmas h2,
+body.theme-alien-xmas h3 {
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  font-weight: 700;
+  text-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue), 0 0 40px var(--neon-green);
+}
+body.theme-alien-xmas .site-header::before,
+body.theme-alien-xmas .site-header::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+}
+/* Alien "Monoliths" - Beacons of Light */
+body.theme-alien-xmas .site-header::before {
+  left: 12%;
+  top: 0;
+  width: 4px;
+  height: 120px;
+  background: linear-gradient(to bottom, transparent, var(--xmas-alien-green));
+  box-shadow: 0 0 20px var(--xmas-alien-green), 0 0 40px var(--xmas-alien-green);
+  border-radius: 2px;
+}
+body.theme-alien-xmas .site-header::after {
+  right: 12%;
+  top: 10px;
+  width: 4px;
+  height: 100px;
+  background: linear-gradient(to bottom, transparent, var(--xmas-alien-red));
+  box-shadow: 0 0 20px var(--xmas-alien-red), 0 0 40px var(--xmas-alien-red);
+  border-radius: 2px;
+}
+
+/* Garland as a Data Stream / Light Cable */
+body.theme-alien-xmas .nav {
+  position: relative;
+  padding-top: 30px;
+}
+body.theme-alien-xmas .nav::before {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 10px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--xmas-alien-green), var(--xmas-alien-gold), var(--xmas-alien-red), transparent);
+  box-shadow: 0 0 15px var(--xmas-alien-gold);
+  opacity: 0.8;
+}
+
+body.theme-alien-xmas .nav-link {
+  background: rgba(2, 8, 12, 0.8);
+  border: 1px solid var(--neon-blue);
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(94,241,255,0.2);
+  color: var(--neon-blue);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+body.theme-alien-xmas .nav-link:hover,
+body.theme-alien-xmas .nav-link:focus {
+  background: var(--neon-blue);
+  color: #000;
+  box-shadow: 0 0 20px var(--neon-blue), 0 0 40px var(--neon-blue);
+  border-color: #fff;
+}
+
+body.theme-alien-xmas .card {
+  background: rgba(5, 10, 16, 0.7);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+  color: var(--text);
+}
+body.theme-alien-xmas .card:hover {
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.2), 0 0 10px var(--neon-green) inset;
+  border-color: var(--neon-green);
+}
+
+body.theme-alien-xmas .site-footer {
+  position: relative;
+  margin-top: 60px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+body.theme-alien-xmas .site-footer::before {
+  content: "LUX IN TENEBRIS LUCET"; /* Light shines in darkness */
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-base);
+  padding: 0 10px;
+  letter-spacing: 0.2em;
+  color: var(--xmas-alien-gold);
+  text-shadow: 0 0 10px var(--xmas-alien-gold);
+  font-size: 10px;
+  font-family: 'Orbitron', sans-serif;
+}
+
+body.theme-alien-xmas .control-panel {
+  border: 1px solid var(--neon-blue);
+  box-shadow: 0 0 20px rgba(94,241,255,0.3);
+  background: rgba(0, 5, 10, 0.9);
+}
+
+/* Alien Xmas falling code-snow canvas */
+.alien-snow-canvas{
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  display: none;
+}
+body.theme-alien-xmas .alien-snow-canvas{ display:block; }
+
 body.theme-amber{
   --text:#ffdca8; --muted:#c8b48a;
   --neon-blue:#ffbf3b; --neon-green:#ffb347; --neon-pink:#ff8c00;

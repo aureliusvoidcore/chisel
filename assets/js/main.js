@@ -47,6 +47,7 @@
     presetViolet: doc.getElementById('cp-preset-violet'),
     presetMiami: doc.getElementById('cp-preset-miami'),
     presetAlien: doc.getElementById('cp-preset-alien'),
+    presetAlienXmas: doc.getElementById('cp-preset-alien-xmas'),
     presetAmber: doc.getElementById('cp-preset-amber'),
     presetSynth: doc.getElementById('cp-preset-synth'),
     presetRog: doc.getElementById('cp-preset-rog'),
@@ -59,7 +60,7 @@
   const TAB_STORE = 'cp-tab-v1';
   function detectTheme(){
     for (const c of body.classList) if (c.startsWith('theme-')) return c.slice(6);
-    return 'neon';
+    return 'alien-xmas';
   }
   function state(){
     return {
@@ -83,7 +84,7 @@
   function setVar(name, val){ doc.documentElement.style.setProperty(name, val); }
   function getVar(name){ return getComputedStyle(doc.documentElement).getPropertyValue(name).trim(); }
   function applyTheme(theme){
-    const classes = ['theme-neon','theme-matrix','theme-rainbow','theme-laser','theme-amber','theme-synthwave','theme-rog','theme-win98','theme-amiga','theme-mac','theme-doom'];
+    const classes = ['theme-alien-xmas','theme-neon','theme-matrix','theme-rainbow','theme-laser','theme-amber','theme-synthwave','theme-rog','theme-win98','theme-amiga','theme-mac','theme-doom'];
     for(const c of classes) body.classList.remove(c);
     body.classList.add('theme-' + (theme || 'neon'));
   }
@@ -157,12 +158,11 @@
     doomOpt.textContent = 'Doom Classic';
   }
 
-  // Default to Doom Classic theme
-  function defaultDoomSettings(){
-    const small = window.innerWidth < 700 || (window.devicePixelRatio||1) > 2;
-    return { dInt: small ? 'normal' : 'ultra', dVol: small ? 0.35 : 0.55, dReduced: false };
+  // Default to Alien / Cyberpunk Christmas theme
+  function defaultAlienXmasSettings(){
+    return { dInt: 'normal', dVol: 0.0, dReduced: true };
   }
-  const s0 = Object.assign({ theme: 'doom', a1:'#ff2244', a2:'#00ff66', a3:'#a000ff', grid:40, scan:false, laser:'sweep', rainbow:1.0, bg:'#05060a', bgl:0 }, defaultDoomSettings(), load());
+  const s0 = Object.assign({ theme: 'alien-xmas', a1:'#4ef3ff', a2:'#00ff88', a3:'#ff3366', grid:40, scan:true, laser:'sweep', rainbow:1.0, bg:'#02030a', bgl:4 }, defaultAlienXmasSettings(), load());
   apply(s0);
   // Initialize Doom runtime from initial state
   try{
@@ -194,6 +194,7 @@
   CP.presetViolet && CP.presetViolet.addEventListener('click', () => update({ a1:'#9b8cff', a2:'#ff7de9', a3:'#ff00ff' }));
   CP.presetMiami && CP.presetMiami.addEventListener('click', () => update({ a1:'#00e5ff', a2:'#ff00a8', a3:'#ff8a00' }));
   CP.presetAlien && CP.presetAlien.addEventListener('click', () => update({ a1:'#39ff14', a2:'#0ff', a3:'#a1ff0a' }));
+  CP.presetAlienXmas && CP.presetAlienXmas.addEventListener('click', () => update({ theme:'alien-xmas', a1:'#4ef3ff', a2:'#00ff88', a3:'#ff3366', bg:'#02020a', bgl:6, grid:40, scan:true }));
   CP.presetAmber && CP.presetAmber.addEventListener('click', () => update({ theme:'amber', a1:'#ffbf3b', a2:'#ffb347', a3:'#ff8c00' }));
   CP.presetSynth && CP.presetSynth.addEventListener('click', () => update({ theme:'synthwave', a1:'#00eaff', a2:'#2af598', a3:'#ff3cac' }));
   CP.presetRog && CP.presetRog.addEventListener('click', () => update({ theme:'rog', a1:'#ff1133', a2:'#00e5ff', a3:'#ff2255' }));
@@ -252,6 +253,101 @@
     lcanvas.width = Math.floor(lw * ldpr);
     lcanvas.height = Math.floor(lh * ldpr);
     lctx.setTransform(ldpr,0,0,ldpr,0,0);
+  }
+
+  // Alien Xmas code-snow canvas
+  const acanvas = doc.getElementById('alien-snow-canvas');
+  const actx = acanvas && acanvas.getContext ? acanvas.getContext('2d') : null;
+  let aw=0, ah=0, adpr=1;
+  let flakes = [];
+  const ALIEN_CHARS = '✶✷✸✹✺✻✦✧✩✪◇◆¤ᚠᚢᚦᚨᚱᚲᚷᚺᚾᛁᛃ';
+  function resizeAlienSnow(){
+    if (!acanvas || !actx) return;
+    adpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    aw = acanvas.clientWidth = window.innerWidth;
+    ah = acanvas.clientHeight = window.innerHeight;
+    acanvas.width = Math.floor(aw * adpr);
+    acanvas.height = Math.floor(ah * adpr);
+    actx.setTransform(adpr,0,0,adpr,0,0);
+    const count = Math.floor(Math.min(aw, ah) / 15); // Slightly fewer for calmness
+    flakes = new Array(count).fill(0).map(()=>({
+      x: Math.random()*aw,
+      y: Math.random()*ah,
+      v: 0.1 + Math.random()*0.3, // Slower fall
+      sway: 15 + Math.random()*30, // Wider sway
+      phase: Math.random()*Math.PI*2,
+      type: Math.random() > 0.6 ? 'char' : 'orb', // Mix of chars and orbs
+      ch: ALIEN_CHARS[Math.floor(Math.random()*ALIEN_CHARS.length)] || '*',
+      size: 2 + Math.random()*4, // Smaller base size for orbs
+      charSize: 10 + Math.random()*12,
+      hue: 140 + Math.random()*180, // Cyan to Purple range
+      blink: Math.random()*Math.PI*2
+    }));
+  }
+  resizeAlienSnow(); window.addEventListener('resize', resizeAlienSnow);
+
+  function drawAlienSnow(now){
+    if (!acanvas || !actx || !body.classList.contains('theme-alien-xmas')) return;
+    actx.clearRect(0,0,aw,ah);
+    
+    // Draw connections (Mathematical Correlations)
+    actx.lineWidth = 0.5;
+    for (let i=0; i<flakes.length; i++){
+      const f1 = flakes[i];
+      // Update physics
+      f1.y += f1.v;
+      f1.phase += 0.001;
+      f1.blink += 0.02;
+      const ox = Math.sin(now/2000 + f1.phase) * f1.sway;
+      const x1 = f1.x + ox;
+      const y1 = f1.y;
+
+      if (f1.y > ah + 20){
+        f1.y = -20;
+        f1.x = Math.random()*aw;
+      }
+
+      // Draw particle
+      const alpha = 0.2 + 0.5*(0.5+0.5*Math.sin(f1.blink));
+      actx.fillStyle = `hsla(${f1.hue}, 100%, 75%, ${alpha})`;
+      
+      if (f1.type === 'char') {
+        actx.font = `${f1.charSize}px Orbitron, monospace`;
+        actx.textAlign = 'center';
+        actx.textBaseline = 'middle';
+        actx.fillText(f1.ch, x1, y1);
+      } else {
+        actx.beginPath();
+        actx.arc(x1, y1, f1.size, 0, Math.PI*2);
+        actx.fill();
+        // Glow for orbs
+        actx.shadowBlur = 10;
+        actx.shadowColor = `hsla(${f1.hue}, 100%, 50%, 0.8)`;
+        actx.fill();
+        actx.shadowBlur = 0;
+      }
+
+      // Connect to neighbors
+      for (let j=i+1; j<flakes.length; j++){
+        const f2 = flakes[j];
+        const ox2 = Math.sin(now/2000 + f2.phase) * f2.sway;
+        const x2 = f2.x + ox2;
+        const y2 = f2.y;
+        
+        const dx = x1 - x2;
+        const dy = y1 - y2;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+
+        if (dist < 100) { // Connection threshold
+          const connAlpha = (1 - dist/100) * 0.15;
+          actx.strokeStyle = `hsla(${f1.hue}, 100%, 80%, ${connAlpha})`;
+          actx.beginPath();
+          actx.moveTo(x1, y1);
+          actx.lineTo(x2, y2);
+          actx.stroke();
+        }
+      }
+    }
   }
   resizeLaser(); window.addEventListener('resize', resizeLaser);
 
@@ -1219,6 +1315,7 @@
     }
     if (body.classList.contains('theme-matrix')){ drawMatrix(t); }
     if (body.classList.contains('theme-laser')){ drawLaser(t); }
+    if (body.classList.contains('theme-alien-xmas')){ drawAlienSnow(t); }
     if (body.classList.contains('theme-doom')){ drawDoom(t); }
     requestAnimationFrame(tick);
   }

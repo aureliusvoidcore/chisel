@@ -51,6 +51,7 @@
     <section class="cp-section tab-pane" data-tab-panel="themes" role="tabpanel">
       <label for="cp-theme">Theme</label>
       <select id="cp-theme" class="cp-select">
+        <option value="alien-xmas" selected>Alien Xmas (default)</option>
         <option value="neon">Neon Cyberpunk</option>
         <option value="matrix">Anime Matrix</option>
         <option value="rainbow">Rainbow Sweep</option>
@@ -127,7 +128,7 @@
       <div class="cp-row"><button id="cp-preset-miami" class="button">Miami</button><button id="cp-preset-alien" class="button">Alien</button></div>
       <div class="cp-row"><button id="cp-preset-amber" class="button">Amber</button><button id="cp-preset-synth" class="button">Synth</button></div>
       <div class="cp-row"><button id="cp-preset-rog" class="button">ROG</button><button id="cp-preset-tealpurple" class="button">Teal/Purple</button></div>
-      <div class="cp-row"><button id="cp-reset" class="button">Reset</button></div>
+      <div class="cp-row"><button id="cp-preset-alien-xmas" class="button">Alien Xmas</button><button id="cp-reset" class="button">Reset</button></div>
     </section>
   </aside>
   <!-- Content Warning Gate for Doom theme -->
@@ -147,6 +148,7 @@
   <canvas id="matrix-canvas" class="matrix-canvas" aria-hidden="true"></canvas>
   <canvas id="doom-canvas" class="doom-canvas" aria-hidden="true"></canvas>
   <canvas id="laser-canvas" class="laser-canvas" aria-hidden="true"></canvas>
+  <canvas id="alien-snow-canvas" class="alien-snow-canvas" aria-hidden="true"></canvas>
   <main class="container">
     {{ content }}
   </main>

@@ -1,0 +1,7 @@
+--verification-flavor=sva
+--split-verilog
+--lowering-options=disallowLocalVariables,disallowMuxInlining,disallowExpressionInliningInPorts,disallowPackedArrays,noAlwaysComb,verifLabels
+--no-dedup
+--preserve-values=named
+--disable-all-randomization
+--strip-debug-info

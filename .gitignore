@@ -1,0 +1,57 @@
+# SBT build artifacts
+target/
+project/target/
+project/project/
+
+# Scala and Java compiled files
+*.class
+*.log
+*.jar
+*.war
+*.ear
+
+# IDE-specific files
+.idea/
+.bsp/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.metals/
+.bloop/
+
+# Local tools (SBT installation)
+tools/sbt/
+tools/menuconfig/menuconfig
+
+# Generated Verilog files
+generated/
+
+# Configuration files (user-specific)
+.config.mk
+generation_config.json
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.swp
+*.swo
+*~
+*.old
+
+# direnv
+.envrc
+.direnv/
+
+# Test artifacts
+test.vcd
+*.vcd
+
+# Temporary test files
+FixFile.scala
+RegexTest.scala
+test_ebmc.sv
+what
+run_config.sh

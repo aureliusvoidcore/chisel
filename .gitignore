@@ -41,17 +41,7 @@ Thumbs.db
 *~
 *.old
 
-# direnv
-.envrc
-.direnv/
-
 # Test artifacts
 test.vcd
 *.vcd
 
-# Temporary test files
-FixFile.scala
-RegexTest.scala
-test_ebmc.sv
-what
-run_config.sh

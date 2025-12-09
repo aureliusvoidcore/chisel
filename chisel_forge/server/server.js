@@ -229,13 +229,51 @@ function parseCompilationErrors(output) {
 // List available example modules
 app.get('/api/examples', async (req, res) => {
   try {
-    const files = await fs.readdir(CHISEL_SRC);
-    const scalaFiles = files.filter(f => f.endsWith('.scala') && !f.includes('UserModule'));
-    
-    const examples = scalaFiles.map(f => {
-      const name = f.replace('.scala', '');
-      return { name, file: f };
-    });
+    // These are the working modules from the chisel repository
+    const examples = [
+      {
+        name: 'Adder',
+        file: 'Examples.scala',
+        description: 'Simple 4-bit adder',
+        hasParameters: false,
+        parameters: ''
+      },
+      {
+        name: 'Counter',
+        file: 'Examples.scala',
+        description: 'Simple counter with enable',
+        hasParameters: false,
+        parameters: ''
+      },
+      {
+        name: 'Mux2to1',
+        file: 'Examples.scala',
+        description: 'Parameterized 2-to-1 multiplexer',
+        hasParameters: true,
+        parameters: 'width: Int = 8'
+      },
+      {
+        name: 'SimpleALU',
+        file: 'Examples.scala',
+        description: 'Simple ALU with ADD/SUB/AND/OR operations',
+        hasParameters: false,
+        parameters: ''
+      },
+      {
+        name: 'PWMLEDAXI',
+        file: 'PWMLEDAXI.scala',
+        description: 'PWM LED controller with AXI interface',
+        hasParameters: true,
+        parameters: 'pwmFrequency: Int, pwmWidth: Int, addrWidth: Int, dataWidth: Int, axiDataWidth: Int, inlineVerification: Boolean'
+      },
+      {
+        name: 'AbstractedPWMLEDAXI',
+        file: 'PWMLEDAXI.scala',
+        description: 'Abstracted PWM LED controller with AXI',
+        hasParameters: true,
+        parameters: 'pwmFrequency: Int, pwmWidth: Int, addrWidth: Int, dataWidth: Int, axiDataWidth: Int'
+      }
+    ];
     
     res.json({ examples });
   } catch (error) {
@@ -396,4 +434,160 @@ app.listen(PORT, async () => {
   console.log(`  POST /api/verify`);
   console.log(`  GET  /api/examples`);
   console.log(`  GET  /api/examples/:name`);
+  console.log(`  GET  /api/files`);
+  console.log(`  POST /api/files/upload`);
+  console.log(`  GET  /api/files/:fileName`);
+  console.log(`  DELETE /api/files/:fileName`);
+  console.log(`  POST /api/files/rename`);
 });
+
+// File management endpoints
+
+// List files in workspace
+app.get('/api/files', async (req, res) => {
+  try {
+    const files = await fs.readdir(CHISEL_SRC);
+    const scalaFiles = await Promise.all(
+      files
+        .filter(f => f.endsWith('.scala'))
+        .map(async (f) => {
+          const filePath = path.join(CHISEL_SRC, f);
+          const stats = await fs.stat(filePath);
+          return {
+            name: f,
+            path: `examples/${f}`,
+            size: stats.size,
+            modified: stats.mtime
+          };
+        })
+    );
+    
+    res.json({ files: scalaFiles });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Upload a file
+app.post('/api/files/upload', async (req, res) => {
+  const { fileName, content } = req.body;
+  
+  if (!fileName || !content) {
+    return res.status(400).json({ error: 'fileName and content required' });
+  }
+  
+  // Security: validate filename
+  if (fileName.includes('..') || fileName.includes('/')) {
+    return res.status(400).json({ error: 'Invalid file name' });
+  }
+  
+  if (!fileName.endsWith('.scala')) {
+    return res.status(400).json({ error: 'Only .scala files allowed' });
+  }
+  
+  try {
+    const filePath = path.join(CHISEL_SRC, fileName);
+    await fs.writeFile(filePath, content, 'utf-8');
+    
+    res.json({ 
+      success: true, 
+      message: `File ${fileName} uploaded successfully`,
+      fileName 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Download a file
+app.get('/api/files/:fileName', async (req, res) => {
+  const { fileName } = req.params;
+  
+  // Security: validate filename
+  if (fileName.includes('..') || fileName.includes('/')) {
+    return res.status(400).json({ error: 'Invalid file name' });
+  }
+  
+  try {
+    const filePath = path.join(CHISEL_SRC, fileName);
+    const content = await fs.readFile(filePath, 'utf-8');
+    const stats = await fs.stat(filePath);
+    
+    res.json({ 
+      fileName,
+      content,
+      size: stats.size,
+      modified: stats.mtime
+    });
+  } catch (error) {
+    res.status(404).json({ error: 'File not found' });
+  }
+});
+
+// Delete a file
+app.delete('/api/files/:fileName', async (req, res) => {
+  const { fileName } = req.params;
+  
+  // Security: validate filename
+  if (fileName.includes('..') || fileName.includes('/')) {
+    return res.status(400).json({ error: 'Invalid file name' });
+  }
+  
+  // Prevent deletion of example files
+  const examples = ['PWMLEDAXI.scala', 'ShiftRegister.scala', 'Adder.scala', 'Empty.scala'];
+  if (examples.includes(fileName)) {
+    return res.status(400).json({ error: 'Cannot delete example files' });
+  }
+  
+  try {
+    const filePath = path.join(CHISEL_SRC, fileName);
+    await fs.unlink(filePath);
+    
+    res.json({ 
+      success: true, 
+      message: `File ${fileName} deleted successfully` 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Rename a file
+app.post('/api/files/rename', async (req, res) => {
+  const { oldName, newName } = req.body;
+  
+  if (!oldName || !newName) {
+    return res.status(400).json({ error: 'oldName and newName required' });
+  }
+  
+  // Security: validate filenames
+  if (oldName.includes('..') || oldName.includes('/') || 
+      newName.includes('..') || newName.includes('/')) {
+    return res.status(400).json({ error: 'Invalid file name' });
+  }
+  
+  if (!newName.endsWith('.scala')) {
+    return res.status(400).json({ error: 'Only .scala files allowed' });
+  }
+  
+  // Prevent renaming of example files
+  const examples = ['PWMLEDAXI.scala', 'ShiftRegister.scala', 'Adder.scala', 'Empty.scala'];
+  if (examples.includes(oldName)) {
+    return res.status(400).json({ error: 'Cannot rename example files' });
+  }
+  
+  try {
+    const oldPath = path.join(CHISEL_SRC, oldName);
+    const newPath = path.join(CHISEL_SRC, newName);
+    await fs.rename(oldPath, newPath);
+    
+    res.json({ 
+      success: true, 
+      message: `File renamed from ${oldName} to ${newName}`,
+      newName
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+

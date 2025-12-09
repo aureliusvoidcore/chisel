@@ -1,3 +1,6 @@
 [submodule "chisel"]
 	path = chisel
 	url = https://github.com/aureliusvoidcore/chisel
+[submodule "chisel_forge/chisel"]
+	path = chisel_forge/chisel
+	url = https://github.com/aureliusvoidcore/chisel.git

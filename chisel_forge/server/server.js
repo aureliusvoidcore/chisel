@@ -295,7 +295,7 @@ app.get('/api/examples/:name', async (req, res) => {
 
 // Formal verification endpoint using EBMC
 app.post('/api/verify', async (req, res) => {
-  const { moduleName, ebmcParams = {} } = req.body;
+  const { moduleName, ebmcParams = {}, verilogCode } = req.body;
   
   if (!moduleName) {
     return res.status(400).json({ error: 'No module name provided' });
@@ -309,14 +309,29 @@ app.post('/api/verify', async (req, res) => {
     const moduleDir = path.join(CHISEL_GENERATED, moduleName);
     const svFile = path.join(moduleDir, `${moduleName}.sv`);
     
-    // Check if Verilog file exists
-    try {
-      await fs.access(svFile);
-    } catch (err) {
-      return res.status(400).json({ 
-        error: 'Module not compiled yet',
-        message: `Please compile ${moduleName} first before verification`
-      });
+    // If user provided modified Verilog, write it to file
+    if (verilogCode) {
+      try {
+        // Ensure directory exists
+        await fs.mkdir(moduleDir, { recursive: true });
+        await fs.writeFile(svFile, verilogCode, 'utf-8');
+        console.log(`[${sessionId}] Updated Verilog file with user modifications`);
+      } catch (err) {
+        return res.status(500).json({ 
+          error: 'Failed to write modified Verilog',
+          message: err.message
+        });
+      }
+    } else {
+      // Check if Verilog file exists
+      try {
+        await fs.access(svFile);
+      } catch (err) {
+        return res.status(400).json({ 
+          error: 'Module not compiled yet',
+          message: `Please compile ${moduleName} first before verification`
+        });
+      }
     }
     
     // Use EBMC_BIN environment variable or default

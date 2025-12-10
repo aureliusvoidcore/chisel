@@ -19,6 +19,7 @@ function App() {
   const [verificationResult, setVerificationResult] = useState(null);
   const [backendStatus, setBackendStatus] = useState('checking');
   const [vcdFile, setVcdFile] = useState(null);
+  const [isVerilogModified, setIsVerilogModified] = useState(false);
   
   // Layout state
   const [sidebarWidth, setSidebarWidth] = useState(280);
@@ -57,6 +58,7 @@ function App() {
     setModuleName(modName);
     setCode(EXAMPLES[modName].chisel);
     setVerilog("// Click 'Elaborate' to generate Verilog");
+    setIsVerilogModified(false);
     setVerificationResult(null);
     setLogs([]);
     setStatus("Ready");
@@ -87,6 +89,7 @@ function App() {
         setLogs(prev => [...prev, '[Compiler] ✓ Elaboration successful']);
         if (result.verilog) {
           setVerilog(result.verilog);
+          setIsVerilogModified(false);
           setLogs(prev => [...prev, '[Compiler] ✓ SystemVerilog generated']);
         }
         setStatus('Complete');
@@ -109,24 +112,32 @@ function App() {
       return;
     }
     
-    setLogs([`Compiling ${moduleName}...`]);
-    setStatus("Compiling...");
-    
-    try {
-      const compileResult = await compilationService.compile(code, moduleName, config);
+    // If Verilog is modified, skip compilation to preserve changes
+    if (!isVerilogModified) {
+      setLogs([`Compiling ${moduleName}...`]);
+      setStatus("Compiling...");
       
-      if (!compileResult.success) {
-        setLogs(prev => [...prev, `[Error] ${compileResult.error}`]);
+      try {
+        const compileResult = await compilationService.compile(code, moduleName, config);
+        
+        if (!compileResult.success) {
+          setLogs(prev => [...prev, `[Error] ${compileResult.error}`]);
+          setStatus('Failed');
+          return;
+        }
+        
+        setLogs(prev => [...prev, '[Compiler] ✓ Compiled, verifying...']);
+        if (compileResult.verilog) {
+          setVerilog(compileResult.verilog);
+          setIsVerilogModified(false);
+        }
+      } catch (error) {
+        setLogs(prev => [...prev, `[Error] ${error.message}`]);
         setStatus('Failed');
         return;
       }
-      
-      setLogs(prev => [...prev, '[Compiler] ✓ Compiled, verifying...']);
-      if (compileResult.verilog) setVerilog(compileResult.verilog);
-    } catch (error) {
-      setLogs(prev => [...prev, `[Error] ${error.message}`]);
-      setStatus('Failed');
-      return;
+    } else {
+      setLogs([`Using modified SystemVerilog for verification...`]);
     }
     
     setIsVerifying(true);
@@ -143,10 +154,11 @@ function App() {
     }
 
     try {
-        const response = await compilationService.verify(moduleName, ebmcParams);
+        // Pass verilog code if modified
+        const response = await compilationService.verify(moduleName, ebmcParams, isVerilogModified ? verilog : null);
         
         if (response.success) {
-            const { results, stdout, vcdFile: generatedVcd } = response;
+            const { results, stdout, stderr, vcdFile: generatedVcd, exitCode } = response;
             if (generatedVcd) {
                 setVcdFile(generatedVcd);
                 setLogs(prev => [...prev, `✓ VCD file generated: ${generatedVcd}`]);
@@ -154,15 +166,24 @@ function App() {
             const proved = results.proved || [];
             const failed = results.failed || [];
             
-            setLogs([
+            const logOutput = [
                 `Verification completed for ${moduleName}`,
-                `Mode: ${response.mode}`,
+                `Exit Code: ${exitCode}`,
                 '',
                 `✓ Proved: ${proved.length} properties`,
                 `✗ Failed: ${failed.length} properties`,
-                '',
-                ...stdout.split('\n')
-            ]);
+            ];
+
+            if (stderr) {
+                logOutput.push('', '--- Standard Error ---');
+                stderr.split('\n').forEach(line => {
+                    if (line.trim()) logOutput.push(`[Error] ${line}`);
+                });
+            }
+
+            logOutput.push('', '--- Standard Output ---', ...stdout.split('\n'));
+            
+            setLogs(logOutput);
             
             if (failed.length > 0) {
                 setVerificationResult('fail');
@@ -170,6 +191,9 @@ function App() {
             } else if (proved.length > 0) {
                 setVerificationResult('success');
                 setStatus(`Success - ${proved.length} properties proved`);
+            } else if (exitCode !== 0 || (stderr && (stderr.toLowerCase().includes('error') || stderr.toLowerCase().includes('no support')))) {
+                setVerificationResult('fail');
+                setStatus("Tool Error - Check Console");
             } else {
                 setVerificationResult('unknown');
                 setStatus("Complete");
@@ -426,17 +450,27 @@ function App() {
 
           {/* SystemVerilog Viewer */}
           <div style={{ width: `${100 - editorSplitPos}%` }} className="bg-neutral-900 flex flex-col">
-            <div className="px-3 py-2 bg-neutral-800 border-b border-neutral-700 text-xs font-semibold text-gray-400">
-              Generated SystemVerilog
+            <div className="px-3 py-2 bg-neutral-800 border-b border-neutral-700 text-xs font-semibold text-gray-400 flex justify-between items-center">
+              <span>Generated SystemVerilog</span>
+              {isVerilogModified && (
+                <span className="flex items-center text-yellow-400 space-x-1">
+                  <div className="w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
+                  <span>Modified</span>
+                </span>
+              )}
             </div>
             <div className="flex-1">
               <Editor
                 height="100%"
                 language="verilog"
                 value={verilog}
+                onChange={(val) => {
+                  setVerilog(val);
+                  setIsVerilogModified(true);
+                }}
                 theme="vs-dark"
                 options={{
-                  readOnly: true,
+                  readOnly: false,
                   minimap: { enabled: true },
                   fontSize: 14,
                   fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
@@ -528,8 +562,17 @@ function App() {
             </span>
         </div>
         <div className="flex items-center space-x-2">
-            <div className={`w-2 h-2 rounded-full ${isVerifying || isCompiling ? 'bg-yellow-400 animate-pulse' : 'bg-green-400'}`}></div>
-            <span>{status}</span>
+            <div className={`w-2 h-2 rounded-full ${
+              isVerifying || isCompiling ? 'bg-yellow-400 animate-pulse' : 
+              verificationResult === 'fail' || verificationResult === 'error' ? 'bg-red-400' :
+              verificationResult === 'success' ? 'bg-green-400' :
+              'bg-gray-400'
+            }`}></div>
+            <span className={`${
+              verificationResult === 'fail' || verificationResult === 'error' ? 'text-red-300' : 
+              verificationResult === 'success' ? 'text-green-300' : 
+              'text-blue-200/80'
+            }`}>{status}</span>
         </div>
       </footer>
     </div>

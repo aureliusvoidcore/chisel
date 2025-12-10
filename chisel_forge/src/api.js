@@ -69,18 +69,25 @@ class CompilationService {
    * Run formal verification on a compiled module
    * @param {string} moduleName - Name of the module to verify
    * @param {object} ebmcParams - EBMC parameters configuration object
+   * @param {string} verilogCode - Optional modified Verilog code
    * @returns {Promise<object>} Verification result
    */
-  async verify(moduleName, ebmcParams = {}) {
+  async verify(moduleName, ebmcParams = {}, verilogCode = null) {
+    const body = {
+      moduleName,
+      ebmcParams
+    };
+
+    if (verilogCode) {
+      body.verilogCode = verilogCode;
+    }
+
     const response = await fetch(`${this.baseUrl}/verify`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        moduleName,
-        ebmcParams
-      })
+      body: JSON.stringify(body)
     });
 
     const result = await response.json();

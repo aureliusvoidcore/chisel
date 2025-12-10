@@ -246,11 +246,9 @@ function App() {
       </header>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Row: Sidebar + Editors */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* Left Sidebar with Tabs (full height) */}
-          <div className="bg-neutral-800 border-r border-neutral-700 flex flex-col relative" style={{ width: `${sidebarWidth}px` }}>
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Sidebar with Tabs (absolute full height) */}
+        <div className="bg-neutral-800 border-r border-neutral-700 flex flex-col relative" style={{ width: `${sidebarWidth}px` }}>
             {/* Tab Headers */}
             <div className="flex border-b border-neutral-700 shrink-0">
               <button
@@ -353,7 +351,9 @@ function App() {
             />
           </div>
 
-          {/* Right Column: Editors */}
+        {/* Right Column: Editors (top) + Console (bottom) */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Editors Row */}
           <div className="flex-1 flex relative overflow-hidden">
           {/* Chisel Editor */}
           <div style={{ width: `${editorSplitPos}%` }} className="bg-neutral-900 flex flex-col">
@@ -430,15 +430,10 @@ function App() {
             </div>
             </div>
           </div>
-        </div>
 
-        {/* Bottom Row: Console spanning full width on right */}
-        <div className="flex border-t border-neutral-700" style={{ height: `${consoleHeight}px` }}>
-          {/* Empty space matching sidebar width */}
-          <div style={{ width: `${sidebarWidth}px` }} className="bg-neutral-800 border-r border-neutral-700"></div>
-          
-          {/* Console spanning remaining width */}
-          <div className="flex-1 bg-neutral-950 flex flex-col relative">
+          {/* Console Row */}
+          <div className="flex border-t border-neutral-700" style={{ height: `${consoleHeight}px` }}>
+            <div className="flex-1 bg-neutral-950 flex flex-col relative">
             {/* Resize Handle for Console Height */}
             <div
               onMouseDown={(e) => {
@@ -494,6 +489,7 @@ function App() {
               )}
             </div>
           </div>
+        </div>
         </div>
       </div>
 

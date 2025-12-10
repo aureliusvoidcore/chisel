@@ -11,6 +11,11 @@ class Empty extends Module {
 `
   },
   "PWMLEDAXI": {
+    ebmcParams: {
+      method: "ic3",
+      bound: "10",
+      layers: "layer$PWMLEDAXIVerification,layer$PWMLEDAXIVerification$Assert,layer$PWMLEDAXIVerification$Assume,layer$PWMLEDAXIVerification$Cover"
+    },
     chisel: `package examples
 import chisel3._
 import chisel3.util._

@@ -33,10 +33,24 @@ const EbmcConfig = ({ config, onChange }) => {
       help: 'Maximum number of time frames to unroll (default: 1)',
       category: 'Core'
     },
+    top: {
+      label: 'Top Module',
+      type: 'text',
+      placeholder: 'module_name',
+      help: 'Set the top module to verify (--top)',
+      category: 'Core'
+    },
     property: {
       label: 'Property ID',
       type: 'text',
       help: 'Check specific property by ID (leave empty for all)',
+      category: 'Core'
+    },
+    propertyExpr: {
+      label: 'Property Expression',
+      type: 'text',
+      placeholder: 'expr',
+      help: 'Specify a property expression directly (-p)',
       category: 'Core'
     },
     
@@ -53,8 +67,46 @@ const EbmcConfig = ({ config, onChange }) => {
       help: 'Select the verification algorithm',
       category: 'Methods'
     },
+    randomTraces: {
+      label: 'Random Traces',
+      type: 'checkbox',
+      help: 'Generate random traces instead of formal verification',
+      category: 'Methods'
+    },
+    traces: {
+      label: 'Number of Traces',
+      type: 'number',
+      min: 1,
+      max: 1000,
+      help: 'Number of random traces to generate',
+      category: 'Methods',
+      dependsOn: { randomTraces: true }
+    },
+    randomSeed: {
+      label: 'Random Seed',
+      type: 'number',
+      help: 'Random seed for trace generation',
+      category: 'Methods',
+      dependsOn: { randomTraces: true }
+    },
+    traceSteps: {
+      label: 'Trace Steps',
+      type: 'number',
+      min: 1,
+      max: 1000,
+      help: 'Number of random transitions per trace (default: 10)',
+      category: 'Methods',
+      dependsOn: { randomTraces: true }
+    },
     
     // Output & Traces
+    outfile: {
+      label: 'Output File',
+      type: 'text',
+      placeholder: 'output.txt',
+      help: 'Set output file name (default: stdout)',
+      category: 'Output'
+    },
     vcd: {
       label: 'VCD Output',
       type: 'text',
@@ -87,6 +139,12 @@ const EbmcConfig = ({ config, onChange }) => {
       help: 'Output results in JSON format to file',
       category: 'Output'
     },
+    showProperties: {
+      label: 'Show Properties',
+      type: 'checkbox',
+      help: 'List all properties in the model before verification',
+      category: 'Output'
+    },
     
     // Solver Options
     solver: {
@@ -95,6 +153,8 @@ const EbmcConfig = ({ config, onChange }) => {
       options: [
         { value: '', label: 'Default (AIG)' },
         { value: 'aig', label: 'AIG (bit-level)' },
+        { value: 'dimacs', label: 'DIMACS CNF' },
+        { value: 'smt2', label: 'SMT2 formula' },
         { value: 'z3', label: 'Z3' },
         { value: 'cvc4', label: 'CVC4' },
         { value: 'boolector', label: 'Boolector' },
@@ -130,6 +190,33 @@ const EbmcConfig = ({ config, onChange }) => {
     },
     
     // Verilog Options
+    includePath: {
+      label: 'Include Paths',
+      type: 'text',
+      placeholder: '/path/to/includes',
+      help: 'Verilog include paths, comma-separated (-I)',
+      category: 'Verilog'
+    },
+    defines: {
+      label: 'Preprocessor Defines',
+      type: 'text',
+      placeholder: 'VAR1=value,VAR2,VAR3=123',
+      help: 'Comma-separated defines: VAR or VAR=value (-D)',
+      category: 'Verilog'
+    },
+    layers: {
+      label: 'Layer Defines',
+      type: 'text',
+      placeholder: 'layer$Module,layer$Module$Assert',
+      help: 'Comma-separated layer defines to enable (-D layer$...)',
+      category: 'Verilog'
+    },
+    systemverilog: {
+      label: 'Force SystemVerilog',
+      type: 'checkbox',
+      help: 'Force SystemVerilog parsing instead of Verilog',
+      category: 'Verilog'
+    },
     reset: {
       label: 'Reset Expression',
       type: 'text',
@@ -151,24 +238,123 @@ const EbmcConfig = ({ config, onChange }) => {
     },
     
     // Advanced/Debug
+    livenessToSafety: {
+      label: 'Liveness to Safety',
+      type: 'checkbox',
+      help: 'Transform liveness properties to safety properties',
+      category: 'Advanced'
+    },
+    buechi: {
+      label: 'Buechi Automaton',
+      type: 'checkbox',
+      help: 'Translate LTL/SVA properties to Buechi acceptance',
+      category: 'Advanced'
+    },
+    rankingFunction: {
+      label: 'Ranking Function',
+      type: 'text',
+      placeholder: 'function_expr',
+      help: 'Prove liveness using ranking function (experimental)',
+      category: 'Advanced'
+    },
+    neuralLiveness: {
+      label: 'Neural Liveness',
+      type: 'checkbox',
+      help: 'Check liveness using neural inference (experimental)',
+      category: 'Advanced'
+    },
+    neuralEngine: {
+      label: 'Neural Engine Command',
+      type: 'text',
+      placeholder: 'neural_cmd',
+      help: 'Neural engine to use for liveness checking',
+      category: 'Advanced',
+      dependsOn: { neuralLiveness: true }
+    },
+    randomWaveform: {
+      label: 'Random Waveform',
+      type: 'checkbox',
+      help: 'Generate random trace and show in horizontal form',
+      category: 'Advanced'
+    },
+    dotNetlist: {
+      label: 'DOT Netlist',
+      type: 'checkbox',
+      help: 'Show netlist in DOT format',
+      category: 'Advanced'
+    },
+    smvNetlist: {
+      label: 'SMV Netlist',
+      type: 'checkbox',
+      help: 'Show netlist in SMV format',
+      category: 'Advanced'
+    },
+    smvWordLevel: {
+      label: 'SMV Word-Level',
+      type: 'checkbox',
+      help: 'Output word-level SMV',
+      category: 'Advanced'
+    },
+    preprocess: {
+      label: 'Show Preprocessed',
+      type: 'checkbox',
+      help: 'Output the preprocessed source file',
+      category: 'Advanced'
+    },
+    showParse: {
+      label: 'Show Parse Tree',
+      type: 'checkbox',
+      help: 'Display parse trees',
+      category: 'Advanced'
+    },
+    showModules: {
+      label: 'Show Modules',
+      type: 'checkbox',
+      help: 'List all modules in the design',
+      category: 'Advanced'
+    },
+    showModuleHierarchy: {
+      label: 'Show Module Hierarchy',
+      type: 'checkbox',
+      help: 'Display hierarchy of module instantiations',
+      category: 'Advanced'
+    },
+    showVarmap: {
+      label: 'Show Variable Map',
+      type: 'checkbox',
+      help: 'Display variable mapping',
+      category: 'Advanced'
+    },
+    showNetlist: {
+      label: 'Show Netlist',
+      type: 'checkbox',
+      help: 'Display the netlist',
+      category: 'Advanced'
+    },
+    showLdg: {
+      label: 'Show Latch Dependencies',
+      type: 'checkbox',
+      help: 'Display latch dependency graph',
+      category: 'Advanced'
+    },
+    showFormula: {
+      label: 'Show Formula',
+      type: 'checkbox',
+      help: 'Display the generated formula',
+      category: 'Advanced'
+    },
+    showTrans: {
+      label: 'Show Transition System',
+      type: 'checkbox',
+      help: 'Display the transition system',
+      category: 'Advanced'
+    },
     verbosity: {
       label: 'Verbosity',
       type: 'number',
       min: 0,
       max: 10,
       help: 'Output verbosity (0=silent, 10=everything)',
-      category: 'Advanced'
-    },
-    showProperties: {
-      label: 'Show Properties',
-      type: 'checkbox',
-      help: 'List all properties in the model before verification',
-      category: 'Advanced'
-    },
-    livenessToSafety: {
-      label: 'Liveness to Safety',
-      type: 'checkbox',
-      help: 'Transform liveness properties to safety properties',
       category: 'Advanced'
     }
   };

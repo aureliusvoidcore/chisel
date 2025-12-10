@@ -34,7 +34,8 @@ function App() {
     run_formal: 'no'
   });
 
-  const [ebmcParams, setEbmcParams] = useState({});
+  // Initialize ebmcParams from the default module if available
+  const [ebmcParams, setEbmcParams] = useState(EXAMPLES["Empty"]?.ebmcParams || {});
 
   // Check backend health on mount
   useEffect(() => {
@@ -59,6 +60,14 @@ function App() {
     setVerificationResult(null);
     setLogs([]);
     setStatus("Ready");
+    
+    // Load EBMC parameters if they exist for this module
+    if (EXAMPLES[modName].ebmcParams) {
+      setEbmcParams(EXAMPLES[modName].ebmcParams);
+      setLogs(prev => [...prev, `[Config] Loaded EBMC parameters for ${modName}`]);
+    } else {
+      setEbmcParams({});
+    }
   };
 
   const handleCompile = async () => {
@@ -124,6 +133,14 @@ function App() {
     setStatus("Verifying...");
     setVerificationResult(null);
     setVcdFile(null);
+
+    // Log EBMC parameters being used
+    const paramCount = Object.keys(ebmcParams).length;
+    if (paramCount > 0) {
+      setLogs(prev => [...prev, `[EBMC] Using ${paramCount} parameter(s): ${JSON.stringify(ebmcParams)}`]);
+    } else {
+      setLogs(prev => [...prev, '[EBMC] Using default parameters']);
+    }
 
     try {
         const response = await compilationService.verify(moduleName, ebmcParams);

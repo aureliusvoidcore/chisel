@@ -4,6 +4,8 @@ import { Hammer, Play, Settings, FolderOpen, Save, Download } from 'lucide-react
 import { EXAMPLES } from './examples'
 import compilationService from './api'
 import EbmcConfig from './components/EbmcConfig'
+import BuildConfig from './components/BuildConfig'
+import ResizablePanel from './components/ResizablePanel'
 
 function App() {
   const [code, setCode] = useState(EXAMPLES["Empty"] ? EXAMPLES["Empty"].chisel : "");
@@ -17,6 +19,11 @@ function App() {
   const [verificationResult, setVerificationResult] = useState(null);
   const [backendStatus, setBackendStatus] = useState('checking');
   const [vcdFile, setVcdFile] = useState(null);
+  
+  // Layout state
+  const [sidebarWidth, setSidebarWidth] = useState(240);
+  const [bottomHeight, setBottomHeight] = useState(300);
+  const [editorSplitPos, setEditorSplitPos] = useState(50); // percentage
   
   const [config, setConfig] = useState({
     mode: 'verification',
@@ -239,10 +246,17 @@ function App() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Row: Sidebar + Editor (Full Width) */}
+        {/* Top Row: Sidebar + Editors (Chisel + Verilog) */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Sidebar */}
-          <aside className="w-56 bg-neutral-800 border-r border-neutral-700 flex flex-col">
+          {/* Modules Sidebar */}
+          <ResizablePanel
+            width={sidebarWidth}
+            onResize={setSidebarWidth}
+            minWidth={180}
+            maxWidth={400}
+            side="left"
+            className="bg-neutral-800 border-r border-neutral-700 flex flex-col"
+          >
             <div className="p-3 border-b border-neutral-700 text-xs uppercase font-semibold text-gray-500">
               Modules
             </div>
@@ -260,31 +274,98 @@ function App() {
                 </div>
               ))}
             </div>
-          </aside>
+          </ResizablePanel>
 
-          {/* Editor - Takes Full Width */}
-          <main className="flex-1 bg-neutral-900">
-            <Editor
-              height="100%"
-              language="scala"
-              value={code}
-              onChange={(val) => setCode(val)}
-              theme="vs-dark"
-              options={{
-                minimap: { enabled: true },
-                fontSize: 14,
-                fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                padding: { top: 20 },
-                scrollBeyondLastLine: false,
+          {/* Editors Container with Split */}
+          <div className="flex-1 flex relative">
+            {/* Chisel Editor */}
+            <div style={{ width: `${editorSplitPos}%` }} className="bg-neutral-900 flex flex-col">
+              <div className="px-3 py-2 bg-neutral-800 border-b border-neutral-700 text-xs font-semibold text-gray-400">
+                Chisel Source
+              </div>
+              <div className="flex-1">
+                <Editor
+                  height="100%"
+                  language="scala"
+                  value={code}
+                  onChange={(val) => setCode(val)}
+                  theme="vs-dark"
+                  options={{
+                    minimap: { enabled: true },
+                    fontSize: 14,
+                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                    padding: { top: 10 },
+                    scrollBeyondLastLine: false,
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Resize Handle */}
+            <div
+              onMouseDown={(e) => {
+                e.preventDefault();
+                const container = e.currentTarget.parentElement;
+                const containerRect = container.getBoundingClientRect();
+                
+                const handleMouseMove = (moveEvent) => {
+                  const offsetX = moveEvent.clientX - containerRect.left;
+                  const percentage = (offsetX / containerRect.width) * 100;
+                  const clampedPercentage = Math.max(30, Math.min(70, percentage));
+                  setEditorSplitPos(clampedPercentage);
+                };
+                
+                const handleMouseUp = () => {
+                  document.removeEventListener('mousemove', handleMouseMove);
+                  document.removeEventListener('mouseup', handleMouseUp);
+                  document.body.style.cursor = '';
+                  document.body.style.userSelect = '';
+                };
+                
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+                document.body.style.cursor = 'ew-resize';
+                document.body.style.userSelect = 'none';
               }}
+              className="w-1 cursor-ew-resize hover:bg-blue-500/50 active:bg-blue-500 bg-neutral-700 transition-colors z-50"
             />
-          </main>
+
+            {/* SystemVerilog Viewer */}
+            <div style={{ width: `${100 - editorSplitPos}%` }} className="bg-neutral-900 flex flex-col">
+              <div className="px-3 py-2 bg-neutral-800 border-b border-neutral-700 text-xs font-semibold text-gray-400">
+                Generated SystemVerilog
+              </div>
+              <div className="flex-1">
+                <Editor
+                  height="100%"
+                  language="verilog"
+                  value={verilog}
+                  theme="vs-dark"
+                  options={{
+                    readOnly: true,
+                    minimap: { enabled: true },
+                    fontSize: 14,
+                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                    padding: { top: 10 },
+                    scrollBeyondLastLine: false,
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Bottom Row: Console + Config Panel */}
-        <div className="h-60 flex border-t border-neutral-700">
-          {/* Console Output - 70% width */}
-          <div className="flex-[7] bg-neutral-950 border-r border-neutral-700 flex flex-col">
+        <ResizablePanel
+          width={bottomHeight}
+          onResize={setBottomHeight}
+          minWidth={200}
+          maxWidth={600}
+          side="bottom"
+          className="flex border-t border-neutral-700"
+        >
+          {/* Console Output */}
+          <div className="flex-1 bg-neutral-950 border-r border-neutral-700 flex flex-col">
             <div className="flex items-center justify-between px-4 py-2 bg-neutral-900 border-b border-neutral-800">
               <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Console</span>
               <button 
@@ -312,15 +393,22 @@ function App() {
             </div>
           </div>
 
-          {/* Right Panel: Status + Config - 30% width */}
-          <div className="flex-[3] bg-neutral-800 flex flex-col">
+          {/* Configuration Panel - Same width as sidebar */}
+          <ResizablePanel
+            width={sidebarWidth}
+            onResize={setSidebarWidth}
+            minWidth={180}
+            maxWidth={400}
+            side="right"
+            className="bg-neutral-800 flex flex-col"
+          >
             <div className="px-4 py-2 border-b border-neutral-700 bg-neutral-900">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Status & Configuration</span>
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Configuration</span>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {/* Verification Status */}
-              <div className={`p-4 rounded-lg text-center text-sm ${
+              <div className={`p-3 rounded-lg text-center text-sm ${
                 verificationResult === 'success' ? 'bg-green-900/20 text-green-400' :
                 verificationResult === 'fail' ? 'bg-red-900/20 text-red-400' :
                 verificationResult === 'error' ? 'bg-yellow-900/20 text-yellow-400' :
@@ -329,74 +417,25 @@ function App() {
                 {verificationResult ? status : 'Ready'}
               </div>
 
-              {/* Config Options */}
-              <div className="space-y-4">
-                {/* EBMC Parameters */}
-                <EbmcConfig config={ebmcParams} onChange={setEbmcParams} />
+              {/* VCD Download */}
+              {vcdFile && (
+                <button
+                  onClick={handleDownloadVCD}
+                  className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-green-900/20 hover:bg-green-900/30 text-green-400 rounded text-xs font-medium transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Download {vcdFile}</span>
+                </button>
+              )}
 
-                {/* VCD Download Button */}
-                {vcdFile && (
-                  <button
-                    onClick={handleDownloadVCD}
-                    className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-green-900/20 hover:bg-green-900/30 text-green-400 rounded text-xs font-medium transition-colors"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>Download {vcdFile}</span>
-                  </button>
-                )}
+              {/* Build Configuration */}
+              <BuildConfig config={config} onChange={setConfig} />
 
-                <div className="border-t border-neutral-700 pt-3">
-                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Elaboration Config</div>
-                </div>
-
-                <div>
-                  <label className="text-xs text-gray-400 block mb-1">Mode</label>
-                  <select 
-                    value={config.mode}
-                    onChange={(e) => setConfig({...config, mode: e.target.value})}
-                    className="w-full bg-neutral-700 border border-neutral-600 rounded px-2 py-1.5 text-xs text-gray-200"
-                  >
-                    <option value="verification">Verification</option>
-                    <option value="synthesis">Synthesis</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="text-xs text-gray-400 block mb-1">Layers</label>
-                  <select 
-                    value={config.layers}
-                    onChange={(e) => setConfig({...config, layers: e.target.value})}
-                    className="w-full bg-neutral-700 border border-neutral-600 rounded px-2 py-1.5 text-xs text-gray-200"
-                  >
-                    <option value="inline">Inline</option>
-                    <option value="split">Split (bind)</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label className="text-xs text-gray-400 block mb-1">Preserve Values</label>
-                  <select 
-                    value={config.preserve_values}
-                    onChange={(e) => setConfig({...config, preserve_values: e.target.value})}
-                    className="w-full bg-neutral-700 border border-neutral-600 rounded px-2 py-1.5 text-xs text-gray-200"
-                  >
-                    <option value="named">Named</option>
-                    <option value="all">All</option>
-                    <option value="none">None</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Generated Verilog Preview */}
-              <div>
-                <div className="text-xs font-semibold text-blue-400 mb-2">Generated SystemVerilog</div>
-                <div className="bg-neutral-900 rounded border border-neutral-700 p-2 font-mono text-xs text-gray-400 overflow-auto max-h-48">
-                  <pre className="whitespace-pre-wrap">{verilog}</pre>
-                </div>
-              </div>
+              {/* EBMC Parameters */}
+              <EbmcConfig config={ebmcParams} onChange={setEbmcParams} />
             </div>
-          </div>
-        </div>
+          </ResizablePanel>
+        </ResizablePanel>
       </div>
 
       {/* Status Bar */}

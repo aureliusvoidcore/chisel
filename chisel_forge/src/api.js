@@ -68,10 +68,10 @@ class CompilationService {
   /**
    * Run formal verification on a compiled module
    * @param {string} moduleName - Name of the module to verify
-   * @param {string} mode - Verification mode (default, k-induction, ic3)
+   * @param {object} ebmcParams - EBMC parameters configuration object
    * @returns {Promise<object>} Verification result
    */
-  async verify(moduleName, mode = 'default') {
+  async verify(moduleName, ebmcParams = {}) {
     const response = await fetch(`${this.baseUrl}/verify`, {
       method: 'POST',
       headers: {
@@ -79,7 +79,7 @@ class CompilationService {
       },
       body: JSON.stringify({
         moduleName,
-        mode
+        ebmcParams
       })
     });
 
@@ -213,6 +213,23 @@ class CompilationService {
     }
 
     return await response.json();
+  }
+
+  /**
+   * Download VCD file from verification result
+   * @param {string} moduleName - Module name
+   * @param {string} fileName - VCD file name
+   * @returns {Promise<Blob>} VCD file as blob
+   */
+  async downloadVCD(moduleName, fileName) {
+    const response = await fetch(`${this.baseUrl}/vcd/${moduleName}/${fileName}`);
+    
+    if (!response.ok) {
+      const result = await response.json();
+      throw new Error(result.error || 'VCD file not found');
+    }
+
+    return await response.blob();
   }
 }
 

@@ -295,14 +295,15 @@ app.get('/api/examples/:name', async (req, res) => {
 
 // Formal verification endpoint using EBMC
 app.post('/api/verify', async (req, res) => {
-  const { moduleName, mode = 'default' } = req.body;
+  const { moduleName, ebmcParams = {} } = req.body;
   
   if (!moduleName) {
     return res.status(400).json({ error: 'No module name provided' });
   }
   
   const sessionId = uuidv4();
-  console.log(`[${sessionId}] Verification request for ${moduleName} with mode ${mode}`);
+  console.log(`[${sessionId}] Verification request for ${moduleName}`);
+  console.log(`[${sessionId}] EBMC params:`, JSON.stringify(ebmcParams, null, 2));
   
   try {
     const moduleDir = path.join(CHISEL_GENERATED, moduleName);
@@ -321,8 +322,12 @@ app.post('/api/verify', async (req, res) => {
     // Use EBMC_BIN environment variable or default
     const ebmcBin = process.env.EBMC_BIN || 'ebmc';
     
-    // Run the formal verification script from chisel repo
-    const verifyCommand = `cd ${CHISEL_ROOT} && EBMC_BIN=${ebmcBin} ./scripts/run_formal.sh ${moduleName} ${mode}`;
+    // Pass EBMC params as JSON to the verification script
+    const paramsJson = JSON.stringify(ebmcParams);
+    const paramsBase64 = Buffer.from(paramsJson).toString('base64');
+    
+    // Run the formal verification script with params
+    const verifyCommand = `cd ${CHISEL_ROOT} && EBMC_BIN=${ebmcBin} EBMC_PARAMS='${paramsBase64}' ./scripts/run_formal.sh ${moduleName}`;
     
     console.log(`[${sessionId}] Running: ${verifyCommand}`);
     
@@ -337,7 +342,8 @@ app.post('/api/verify', async (req, res) => {
         shell: '/bin/bash',
         env: {
           ...process.env,
-          EBMC_BIN: ebmcBin
+          EBMC_BIN: ebmcBin,
+          EBMC_PARAMS: paramsBase64
         }
       });
       stdout = result.stdout;
@@ -353,12 +359,26 @@ app.post('/api/verify', async (req, res) => {
     // Parse results from EBMC output
     const results = parseVerificationResults(stdout);
     
+    // Check if VCD file was generated
+    let vcdFile = null;
+    if (ebmcParams.vcd) {
+      const vcdPath = path.join(moduleDir, ebmcParams.vcd);
+      try {
+        await fs.access(vcdPath);
+        vcdFile = ebmcParams.vcd;
+        console.log(`[${sessionId}] VCD file generated: ${vcdFile}`);
+      } catch (err) {
+        console.log(`[${sessionId}] VCD file not found at ${vcdPath}`);
+      }
+    }
+    
     res.json({
       success: true,
       moduleName,
-      mode,
+      ebmcParams,
       exitCode,
       results,
+      vcdFile,
       stdout,
       stderr
     });
@@ -439,6 +459,7 @@ app.listen(PORT, async () => {
   console.log(`  GET  /api/files/:fileName`);
   console.log(`  DELETE /api/files/:fileName`);
   console.log(`  POST /api/files/rename`);
+  console.log(`  GET  /api/vcd/:moduleName/:fileName`);
 });
 
 // File management endpoints
@@ -588,6 +609,35 @@ app.post('/api/files/rename', async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Download VCD file endpoint
+app.get('/api/vcd/:moduleName/:fileName', async (req, res) => {
+  const { moduleName, fileName } = req.params;
+  
+  // Security: validate inputs
+  if (moduleName.includes('..') || moduleName.includes('/') ||
+      fileName.includes('..') || fileName.includes('/')) {
+    return res.status(400).json({ error: 'Invalid module or file name' });
+  }
+  
+  if (!fileName.endsWith('.vcd')) {
+    return res.status(400).json({ error: 'Only VCD files can be downloaded' });
+  }
+  
+  try {
+    const vcdPath = path.join(CHISEL_GENERATED, moduleName, fileName);
+    await fs.access(vcdPath);
+    
+    // Set headers for file download
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    
+    const fileContent = await fs.readFile(vcdPath);
+    res.send(fileContent);
+  } catch (error) {
+    res.status(404).json({ error: 'VCD file not found' });
   }
 });
 

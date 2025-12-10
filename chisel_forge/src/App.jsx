@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Editor from '@monaco-editor/react'
-import { Hammer, Play, Settings, FolderOpen, Save } from 'lucide-react'
+import { Hammer, Play, Settings, FolderOpen, Save, Download } from 'lucide-react'
 import { EXAMPLES } from './examples'
 import compilationService from './api'
+import EbmcConfig from './components/EbmcConfig'
 
 function App() {
   const [code, setCode] = useState(EXAMPLES["Empty"] ? EXAMPLES["Empty"].chisel : "");
@@ -15,6 +16,7 @@ function App() {
   const [isCompiling, setIsCompiling] = useState(false);
   const [verificationResult, setVerificationResult] = useState(null);
   const [backendStatus, setBackendStatus] = useState('checking');
+  const [vcdFile, setVcdFile] = useState(null);
   
   const [config, setConfig] = useState({
     mode: 'verification',
@@ -23,6 +25,8 @@ function App() {
     randomization: 'disable',
     run_formal: 'no'
   });
+
+  const [ebmcParams, setEbmcParams] = useState({});
 
   // Check backend health on mount
   useEffect(() => {
@@ -111,12 +115,17 @@ function App() {
     setIsVerifying(true);
     setStatus("Verifying...");
     setVerificationResult(null);
+    setVcdFile(null);
 
     try {
-        const response = await compilationService.verify(moduleName);
+        const response = await compilationService.verify(moduleName, ebmcParams);
         
         if (response.success) {
-            const { results, stdout } = response;
+            const { results, stdout, vcdFile: generatedVcd } = response;
+            if (generatedVcd) {
+                setVcdFile(generatedVcd);
+                setLogs(prev => [...prev, `✓ VCD file generated: ${generatedVcd}`]);
+            }
             const proved = results.proved || [];
             const failed = results.failed || [];
             
@@ -151,6 +160,29 @@ function App() {
         setVerificationResult('error');
     } finally {
         setIsVerifying(false);
+    }
+  };
+
+  const handleDownloadVCD = async () => {
+    if (!vcdFile || !moduleName) return;
+    
+    try {
+      setLogs(prev => [...prev, `Downloading ${vcdFile}...`]);
+      const blob = await compilationService.downloadVCD(moduleName, vcdFile);
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = vcdFile;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+      setLogs(prev => [...prev, `✓ Downloaded ${vcdFile}`]);
+    } catch (error) {
+      setLogs(prev => [...prev, `✗ Download failed: ${error.message}`]);
     }
   };
 
@@ -298,7 +330,25 @@ function App() {
               </div>
 
               {/* Config Options */}
-              <div className="space-y-3">
+              <div className="space-y-4">
+                {/* EBMC Parameters */}
+                <EbmcConfig config={ebmcParams} onChange={setEbmcParams} />
+
+                {/* VCD Download Button */}
+                {vcdFile && (
+                  <button
+                    onClick={handleDownloadVCD}
+                    className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-green-900/20 hover:bg-green-900/30 text-green-400 rounded text-xs font-medium transition-colors"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download {vcdFile}</span>
+                  </button>
+                )}
+
+                <div className="border-t border-neutral-700 pt-3">
+                  <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Elaboration Config</div>
+                </div>
+
                 <div>
                   <label className="text-xs text-gray-400 block mb-1">Mode</label>
                   <select 
@@ -333,20 +383,6 @@ function App() {
                     <option value="named">Named</option>
                     <option value="all">All</option>
                     <option value="none">None</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-xs text-gray-400 block mb-1">Formal Verification</label>
-                  <select 
-                    value={config.run_formal}
-                    onChange={(e) => setConfig({...config, run_formal: e.target.value})}
-                    className="w-full bg-neutral-700 border border-neutral-600 rounded px-2 py-1.5 text-xs text-gray-200"
-                  >
-                    <option value="no">No</option>
-                    <option value="default">Default</option>
-                    <option value="k-induction">K-Induction</option>
-                    <option value="ic3">IC3</option>
                   </select>
                 </div>
               </div>

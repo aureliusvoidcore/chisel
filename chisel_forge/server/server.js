@@ -31,6 +31,9 @@ const CHISEL_GENERATED = path.join(CHISEL_ROOT, 'generated');
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 
+// Serve generated files statically for Surfer and downloads
+app.use('/api/files', express.static(CHISEL_GENERATED));
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'ChiselForge compilation server running' });
@@ -445,6 +448,37 @@ function parseVerificationResults(output) {
     }
   }
   
+  return results;
+}
+
+// List generated files (VCDs, etc.)
+app.get('/api/fs/list', async (req, res) => {
+  try {
+    const files = await getFilesRecursive(CHISEL_GENERATED);
+    res.json(files);
+  } catch (error) {
+    console.error('Error listing files:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+async function getFilesRecursive(dir) {
+  let results = [];
+  try {
+    const list = await fs.readdir(dir, { withFileTypes: true });
+    for (const file of list) {
+      const res = path.resolve(dir, file.name);
+      if (file.isDirectory()) {
+        const subFiles = await getFilesRecursive(res);
+        results = results.concat(subFiles);
+      } else {
+        // Return relative path from CHISEL_GENERATED
+        results.push(path.relative(CHISEL_GENERATED, res));
+      }
+    }
+  } catch (e) {
+    // Directory might not exist yet
+  }
   return results;
 }
 

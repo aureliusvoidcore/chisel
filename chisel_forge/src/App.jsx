@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Editor from '@monaco-editor/react'
-import { Hammer, Play, Settings, FolderOpen, Save, Download } from 'lucide-react'
+import { Hammer, Play, Settings, FolderOpen, Save, Download, Activity, X } from 'lucide-react'
 import { EXAMPLES } from './examples'
 import compilationService from './api'
 import EbmcConfig from './components/EbmcConfig'
 import BuildConfig from './components/BuildConfig'
 import ResizablePanel from './components/ResizablePanel'
+import SurferViewer from './components/SurferViewer'
+import FileSystem from './components/FileSystem'
 
 function App() {
   const [code, setCode] = useState(EXAMPLES["Empty"] ? EXAMPLES["Empty"].chisel : "");
@@ -25,7 +27,9 @@ function App() {
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [consoleHeight, setConsoleHeight] = useState(250);
   const [editorSplitPos, setEditorSplitPos] = useState(50); // percentage
-  const [activeTab, setActiveTab] = useState('modules'); // 'modules' or 'config'
+  const [activeTab, setActiveTab] = useState('modules'); // 'modules', 'config', 'files'
+  const [viewMode, setViewMode] = useState('editor'); // 'editor', 'waveform'
+  const [currentVcdUrl, setCurrentVcdUrl] = useState(null);
   
   const [config, setConfig] = useState({
     mode: 'verification',
@@ -70,6 +74,13 @@ function App() {
     } else {
       setEbmcParams({});
     }
+  };
+
+  const handleFileSelect = (file) => {
+    console.log('App: handleFileSelect called with', file);
+    setLogs(prev => [...prev, `Opening ${file}...`]);
+    setCurrentVcdUrl(file);
+    setViewMode('waveform');
   };
 
   const handleCompile = async () => {
@@ -162,6 +173,9 @@ function App() {
             if (generatedVcd) {
                 setVcdFile(generatedVcd);
                 setLogs(prev => [...prev, `✓ VCD file generated: ${generatedVcd}`]);
+                // Prepare VCD URL for viewer
+                const vcdPath = `${moduleName}/${generatedVcd}`;
+                setCurrentVcdUrl(vcdPath);
             }
             const proved = results.proved || [];
             const failed = results.failed || [];
@@ -263,6 +277,32 @@ function App() {
             <Save className="w-5 h-5" />
           </button>
           <div className="h-6 w-px bg-neutral-600 mx-2"></div>
+          
+          {/* View Switcher */}
+          <div className="flex bg-neutral-700 rounded-lg p-1 space-x-1">
+            <button
+              onClick={() => setViewMode('code')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
+                viewMode === 'code' 
+                  ? 'bg-neutral-600 text-white shadow-sm' 
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              Code
+            </button>
+            <button
+              onClick={() => setViewMode('waveform')}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-all ${
+                viewMode === 'waveform' 
+                  ? 'bg-neutral-600 text-white shadow-sm' 
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              Waveform
+            </button>
+          </div>
+
+          <div className="h-6 w-px bg-neutral-600 mx-2"></div>
           <button 
             onClick={handleCompile}
             disabled={isCompiling || isVerifying}
@@ -294,7 +334,7 @@ function App() {
             <div className="flex border-b border-neutral-700 shrink-0">
               <button
                 onClick={() => setActiveTab('modules')}
-                className={`flex-1 px-4 py-2 text-xs font-semibold uppercase transition-colors ${
+                className={`flex-1 px-2 py-2 text-xs font-semibold uppercase transition-colors ${
                   activeTab === 'modules' 
                     ? 'bg-neutral-900 text-blue-400 border-b-2 border-blue-500' 
                     : 'text-gray-500 hover:text-gray-300 hover:bg-neutral-700'
@@ -303,8 +343,18 @@ function App() {
                 Modules
               </button>
               <button
+                onClick={() => setActiveTab('files')}
+                className={`flex-1 px-2 py-2 text-xs font-semibold uppercase transition-colors ${
+                  activeTab === 'files' 
+                    ? 'bg-neutral-900 text-blue-400 border-b-2 border-blue-500' 
+                    : 'text-gray-500 hover:text-gray-300 hover:bg-neutral-700'
+                }`}
+              >
+                Files
+              </button>
+              <button
                 onClick={() => setActiveTab('config')}
-                className={`flex-1 px-4 py-2 text-xs font-semibold uppercase transition-colors ${
+                className={`flex-1 px-2 py-2 text-xs font-semibold uppercase transition-colors ${
                   activeTab === 'config' 
                     ? 'bg-neutral-900 text-blue-400 border-b-2 border-blue-500' 
                     : 'text-gray-500 hover:text-gray-300 hover:bg-neutral-700'
@@ -331,6 +381,8 @@ function App() {
                     </div>
                   ))}
                 </div>
+              ) : activeTab === 'files' ? (
+                <FileSystem onFileSelect={handleFileSelect} />
               ) : (
                 <div className="h-full overflow-y-auto p-4 space-y-3">
                   {/* Verification Status */}
@@ -394,92 +446,98 @@ function App() {
 
         {/* Right Column: Editors (top) + Console (bottom) */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Editors Row */}
+          {/* Main View Area (Editors or Waveform) */}
           <div className="flex-1 flex relative overflow-hidden">
-          {/* Chisel Editor */}
-          <div style={{ width: `${editorSplitPos}%` }} className="bg-neutral-900 flex flex-col">
-            <div className="px-3 py-2 bg-neutral-800 border-b border-neutral-700 text-xs font-semibold text-gray-400">
-              Chisel Source
-            </div>
-            <div className="flex-1">
-              <Editor
-                height="100%"
-                language="scala"
-                value={code}
-                onChange={(val) => setCode(val)}
-                theme="vs-dark"
-                options={{
-                  minimap: { enabled: true },
-                  fontSize: 14,
-                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                  padding: { top: 10 },
-                  scrollBeyondLastLine: false,
-                }}
-              />
-            </div>
-          </div>
+            {viewMode === 'waveform' ? (
+              <SurferViewer vcdUrl={currentVcdUrl} />
+            ) : (
+              <>
+                {/* Chisel Editor */}
+                <div style={{ width: `${editorSplitPos}%` }} className="bg-neutral-900 flex flex-col">
+                  <div className="px-3 py-2 bg-neutral-800 border-b border-neutral-700 text-xs font-semibold text-gray-400">
+                    Chisel Source
+                  </div>
+                  <div className="flex-1">
+                    <Editor
+                      height="100%"
+                      language="scala"
+                      value={code}
+                      onChange={(val) => setCode(val)}
+                      theme="vs-dark"
+                      options={{
+                        minimap: { enabled: true },
+                        fontSize: 14,
+                        fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                        padding: { top: 10 },
+                        scrollBeyondLastLine: false,
+                      }}
+                    />
+                  </div>
+                </div>
 
-          {/* Resize Handle */}
-          <div
-            onMouseDown={(e) => {
-              e.preventDefault();
-              const container = e.currentTarget.parentElement;
-              const containerRect = container.getBoundingClientRect();
-              
-              const handleMouseMove = (moveEvent) => {
-                const offsetX = moveEvent.clientX - containerRect.left;
-                const percentage = (offsetX / containerRect.width) * 100;
-                const clampedPercentage = Math.max(30, Math.min(70, percentage));
-                setEditorSplitPos(clampedPercentage);
-              };
-              
-              const handleMouseUp = () => {
-                document.removeEventListener('mousemove', handleMouseMove);
-                document.removeEventListener('mouseup', handleMouseUp);
-                document.body.style.cursor = '';
-                document.body.style.userSelect = '';
-              };
-              
-              document.addEventListener('mousemove', handleMouseMove);
-              document.addEventListener('mouseup', handleMouseUp);
-              document.body.style.cursor = 'ew-resize';
-              document.body.style.userSelect = 'none';
-            }}
-            className="w-1 cursor-ew-resize hover:bg-blue-500/50 active:bg-blue-500 bg-neutral-700 transition-colors z-50"
-          />
+                {/* Resize Handle */}
+                <div
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    const container = e.currentTarget.parentElement;
+                    const containerRect = container.getBoundingClientRect();
+                    
+                    const handleMouseMove = (moveEvent) => {
+                      const offsetX = moveEvent.clientX - containerRect.left;
+                      const percentage = (offsetX / containerRect.width) * 100;
+                      const clampedPercentage = Math.max(30, Math.min(70, percentage));
+                      setEditorSplitPos(clampedPercentage);
+                    };
+                    
+                    const handleMouseUp = () => {
+                      document.removeEventListener('mousemove', handleMouseMove);
+                      document.removeEventListener('mouseup', handleMouseUp);
+                      document.body.style.cursor = '';
+                      document.body.style.userSelect = '';
+                    };
+                    
+                    document.addEventListener('mousemove', handleMouseMove);
+                    document.addEventListener('mouseup', handleMouseUp);
+                    document.body.style.cursor = 'ew-resize';
+                    document.body.style.userSelect = 'none';
+                  }}
+                  className="w-1 cursor-ew-resize hover:bg-blue-500/50 active:bg-blue-500 bg-neutral-700 transition-colors z-50"
+                />
 
-          {/* SystemVerilog Viewer */}
-          <div style={{ width: `${100 - editorSplitPos}%` }} className="bg-neutral-900 flex flex-col">
-            <div className="px-3 py-2 bg-neutral-800 border-b border-neutral-700 text-xs font-semibold text-gray-400 flex justify-between items-center">
-              <span>Generated SystemVerilog</span>
-              {isVerilogModified && (
-                <span className="flex items-center text-yellow-400 space-x-1">
-                  <div className="w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
-                  <span>Modified</span>
-                </span>
-              )}
-            </div>
-            <div className="flex-1">
-              <Editor
-                height="100%"
-                language="verilog"
-                value={verilog}
-                onChange={(val) => {
-                  setVerilog(val);
-                  setIsVerilogModified(true);
-                }}
-                theme="vs-dark"
-                options={{
-                  readOnly: false,
-                  minimap: { enabled: true },
-                  fontSize: 14,
-                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                  padding: { top: 10 },
-                  scrollBeyondLastLine: false,
-                }}
-              />
-            </div>
-            </div>
+                {/* SystemVerilog Viewer */}
+                <div style={{ width: `${100 - editorSplitPos}%` }} className="bg-neutral-900 flex flex-col">
+                  <div className="px-3 py-2 bg-neutral-800 border-b border-neutral-700 text-xs font-semibold text-gray-400 flex justify-between items-center">
+                    <span>Generated SystemVerilog</span>
+                    {isVerilogModified && (
+                      <span className="flex items-center text-yellow-400 space-x-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
+                        <span>Modified</span>
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <Editor
+                      height="100%"
+                      language="verilog"
+                      value={verilog}
+                      onChange={(val) => {
+                        setVerilog(val);
+                        setIsVerilogModified(true);
+                      }}
+                      theme="vs-dark"
+                      options={{
+                        readOnly: false,
+                        minimap: { enabled: true },
+                        fontSize: 14,
+                        fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                        padding: { top: 10 },
+                        scrollBeyondLastLine: false,
+                      }}
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Console Row */}

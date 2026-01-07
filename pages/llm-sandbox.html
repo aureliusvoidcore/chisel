@@ -8,7 +8,7 @@ permalink: /pages/llm-sandbox.html
 
 <div class="llm-wrap">
   <h1>LLM Sandbox</h1>
-  <p class="llm-note">Quick sandbox to test local LLM loading, prompts, and tool calls with Debug enabled by default.</p>
+  <p class="llm-note">Evaluation sandbox for local model loading, prompt iteration, and tool-call testing (Debug enabled by default).</p>
 
   <div class="llm-controls">
     <label for="llm-engine">Engine</label>
@@ -48,7 +48,7 @@ permalink: /pages/llm-sandbox.html
       <div class="msg msg-system">System: You are a formal verification agent. Use tools (abc, sygus) via JSON and then provide a concise final answer.</div>
     </div>
     <div class="llm-input-row">
-      <textarea id="llm-input" placeholder="Type a prompt. Try: show a verilog counter"></textarea>
+      <textarea id="llm-input" placeholder="Enter a prompt. Example: write a SystemVerilog counter"></textarea>
       <button id="llm-send">Send</button>
       <button id="llm-stop" disabled>Stop</button>
     </div>

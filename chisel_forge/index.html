@@ -2,12 +2,52 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ChiselForge</title>
+    <style>
+      #global-error-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
+        color: #ff5555;
+        z-index: 9999;
+        padding: 20px;
+        font-family: monospace;
+        white-space: pre-wrap;
+        display: none;
+        overflow: auto;
+      }
+    </style>
+    <script>
+      window.onerror = function(msg, url, line, col, error) {
+        var el = document.getElementById('global-error-overlay');
+        if (el) {
+          el.style.display = 'block';
+          el.innerText += "Error: " + msg + "\nAt: " + url + ":" + line + ":" + col + "\n" + (error ? error.stack : "") + "\n\n";
+        }
+        return false;
+      };
+      window.onunhandledrejection = function(event) {
+        var el = document.getElementById('global-error-overlay');
+        if (el) {
+          el.style.display = 'block';
+          el.innerText += "Unhandled Rejection: " + event.reason + "\n\n";
+        }
+      };
+    </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="global-error-overlay"></div>
+    <div id="root">
+      <div style="color: #888; padding: 20px; font-family: sans-serif;">
+        <h1>Loading ChiselForge...</h1>
+        <p>Initializing application environment.</p>
+        <p>If this message persists, an error occurred during startup.</p>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

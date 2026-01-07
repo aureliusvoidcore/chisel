@@ -8,7 +8,6 @@ permalink: /pages/formal-verification/how-to-verify/shift-registers
 
 ## sr.sv
 
-
 ```systemverilog
 module shift_reg #(
     parameter int unsigned WIDTH = 1024

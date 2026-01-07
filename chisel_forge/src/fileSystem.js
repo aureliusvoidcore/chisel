@@ -5,7 +5,7 @@ const DB_NAME = 'ChiselForgeFS';
 const DB_VERSION = 1;
 const STORE_NAME = 'files';
 
-class FileSystem {
+export default class FileSystem {
   constructor() {
     this.db = null;
     this.ready = false;
@@ -222,5 +222,3 @@ class FileSystem {
   }
 }
 
-export const fileSystem = new FileSystem();
-export default fileSystem;

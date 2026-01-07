@@ -5,13 +5,17 @@ import './index.css'
 import { Provider } from 'react-redux'
 import { store } from './store'
 import { ThemeProvider } from './ThemeContext'
+import ErrorBoundary from './ErrorBoundary'
+import './debug-flow'; // Expose debug flow
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <Provider store={store}>
-      <ThemeProvider>
-        <App />
-      </ThemeProvider>
-    </Provider>
+    <ErrorBoundary>
+      <Provider store={store}>
+        <ThemeProvider>
+          <App />
+        </ThemeProvider>
+      </Provider>
+    </ErrorBoundary>
   </React.StrictMode>,
 )

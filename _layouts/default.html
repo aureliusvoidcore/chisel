@@ -33,15 +33,14 @@
         <a href="{{ site.baseurl }}/pages/fpga" class="nav-link">FPGA</a>
         <a href="{{ site.baseurl }}/pages/systemc" class="nav-link">SystemC</a>
         <a href="{{ site.baseurl }}/pages/mathematics" class="nav-link">Mathematics</a>
-        <a href="{{ site.baseurl }}/blog" class="nav-link">Blog</a>
       </nav>
     </div>
   </header>
-  <!-- Theme Manager restored -->
+  <!-- Appearance controls -->
   <aside class="control-panel" aria-label="Control Panel">
-    <div class="cp-header">Theme Manager</div>
-    <div class="control-tabs" role="tablist" aria-label="Theme Manager Categories">
-      <button class="tab-button" role="tab" aria-selected="true" data-tab="themes">Themes</button>
+    <div class="cp-header">Appearance</div>
+    <div class="control-tabs" role="tablist" aria-label="Appearance Categories">
+      <button class="tab-button" role="tab" aria-selected="true" data-tab="themes">Theme</button>
       <button class="tab-button" role="tab" aria-selected="false" data-tab="colors">Colors</button>
       <button class="tab-button" role="tab" aria-selected="false" data-tab="effects">Effects</button>
       <button class="tab-button" role="tab" aria-selected="false" data-tab="animations">Animations</button>
@@ -51,13 +50,13 @@
     <section class="cp-section tab-pane" data-tab-panel="themes" role="tabpanel">
       <label for="cp-theme">Theme</label>
       <select id="cp-theme" class="cp-select">
-        <option value="alien-xmas" selected>Alien Xmas (default)</option>
-        <option value="neon">Neon Cyberpunk</option>
-        <option value="matrix">Anime Matrix</option>
-        <option value="rainbow">Rainbow Sweep</option>
-        <option value="laser">Laser Beam</option>
+        <option value="alien-xmas" selected>Default</option>
+        <option value="neon">Neon</option>
+        <option value="matrix">Matrix</option>
+        <option value="rainbow">Spectrum</option>
+        <option value="laser">Laser</option>
         <option value="amber">Amber Terminal</option>
-        <option value="synthwave">Synthwave</option>
+        <option value="synthwave">Synth</option>
         <option value="rog">ROG Crimson</option>
         <option value="win98">Windows 98</option>
         <option value="amiga">Amiga Workbench</option>
@@ -106,10 +105,10 @@
       </div>
       <div id="cp-section-doom" class="cp-group">
         <div class="cp-row">
-          <label for="cp-doom-intensity">Doom Intensity</label>
+          <label for="cp-doom-intensity">Effects Level</label>
           <select id="cp-doom-intensity" class="cp-select">
             <option value="normal">Normal</option>
-            <option value="ultra">Ultra-Violence</option>
+            <option value="ultra">High</option>
           </select>
         </div>
         <div class="cp-row">
@@ -125,24 +124,24 @@
     <!-- Presets -->
     <section class="cp-section tab-pane is-hidden" data-tab-panel="presets" role="tabpanel" aria-hidden="true">
       <div class="cp-row"><button id="cp-preset-blue" class="button">Blue/Green</button><button id="cp-preset-violet" class="button">Violet/Pink</button></div>
-      <div class="cp-row"><button id="cp-preset-miami" class="button">Miami</button><button id="cp-preset-alien" class="button">Alien</button></div>
+      <div class="cp-row"><button id="cp-preset-miami" class="button">High Contrast</button><button id="cp-preset-alien" class="button">Default</button></div>
       <div class="cp-row"><button id="cp-preset-amber" class="button">Amber</button><button id="cp-preset-synth" class="button">Synth</button></div>
       <div class="cp-row"><button id="cp-preset-rog" class="button">ROG</button><button id="cp-preset-tealpurple" class="button">Teal/Purple</button></div>
-      <div class="cp-row"><button id="cp-preset-alien-xmas" class="button">Alien Xmas</button><button id="cp-reset" class="button">Reset</button></div>
+      <div class="cp-row"><button id="cp-preset-alien-xmas" class="button">Preset A</button><button id="cp-reset" class="button">Reset</button></div>
     </section>
   </aside>
   <!-- Content Warning Gate for Doom theme -->
   <div id="doom-gate" class="doom-gate is-hidden" role="dialog" aria-modal="true" aria-labelledby="doom-gate-title" aria-describedby="doom-gate-desc">
     <div class="doom-gate__backdrop" aria-hidden="true"></div>
     <div class="doom-gate__panel">
-      <h2 id="doom-gate-title">Intense Visuals and Audio</h2>
-      <p id="doom-gate-desc">The Doom Classic theme contains heavy motion, flashing lights, disturbing imagery, and low-frequency audio. Choose how you want to proceed.</p>
+      <h2 id="doom-gate-title">High Motion and Audio Effects</h2>
+      <p id="doom-gate-desc">This theme may include rapid motion, flashing effects, and low-frequency audio. Choose how you want to proceed.</p>
       <div class="doom-gate__actions">
-        <button id="doom-gate-ultra" class="button">Enable Ultra-Violence</button>
-        <button id="doom-gate-reduced" class="button">Play with Reduced Effects</button>
-        <button id="doom-gate-dismiss" class="button button-secondary">No thanks</button>
+        <button id="doom-gate-ultra" class="button">Enable High Effects</button>
+        <button id="doom-gate-reduced" class="button">Enable Reduced Effects</button>
+        <button id="doom-gate-dismiss" class="button button-secondary">Cancel</button>
       </div>
-      <p class="doom-gate__note">Your choice will be remembered. You can tweak intensity later in the Theme Manager.</p>
+      <p class="doom-gate__note">Your choice will be remembered. You can adjust effects later in the Appearance panel.</p>
     </div>
   </div>
   <canvas id="matrix-canvas" class="matrix-canvas" aria-hidden="true"></canvas>

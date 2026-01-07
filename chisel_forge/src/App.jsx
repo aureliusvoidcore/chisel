@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Editor from '@monaco-editor/react'
 import { Hammer, Play, Settings, FolderOpen, Save, Download, Activity, X } from 'lucide-react'
-import { EXAMPLES } from './examples'
+// EXAMPLES import removed
 import compilationService from './api'
 import EbmcConfig from './components/EbmcConfig'
 import BuildConfig from './components/BuildConfig'
@@ -10,10 +10,10 @@ import SurferViewer from './components/SurferViewer'
 import FileSystem from './components/FileSystem'
 
 function App() {
-  const [code, setCode] = useState(EXAMPLES["Empty"] ? EXAMPLES["Empty"].chisel : "");
+  const [code, setCode] = useState("");
   const [verilog, setVerilog] = useState("// Click 'Elaborate' to generate Verilog");
-  const [selectedModule, setSelectedModule] = useState("Empty");
-  const [moduleName, setModuleName] = useState("Empty");
+  const [selectedModule, setSelectedModule] = useState("PWMLEDAXI");
+  const [moduleName, setModuleName] = useState("PWMLEDAXI");
   const [logs, setLogs] = useState([]);
   const [status, setStatus] = useState("Ready");
   const [isVerifying, setIsVerifying] = useState(false);
@@ -22,6 +22,7 @@ function App() {
   const [backendStatus, setBackendStatus] = useState('checking');
   const [vcdFile, setVcdFile] = useState(null);
   const [isVerilogModified, setIsVerilogModified] = useState(false);
+  const [availableModules, setAvailableModules] = useState([]);
   
   // Layout state
   const [sidebarWidth, setSidebarWidth] = useState(280);
@@ -39,40 +40,60 @@ function App() {
     run_formal: 'no'
   });
 
-  // Initialize ebmcParams from the default module if available
-  const [ebmcParams, setEbmcParams] = useState(EXAMPLES["Empty"]?.ebmcParams || {});
+  // Initialize ebmcParams
+  const [ebmcParams, setEbmcParams] = useState({});
 
-  // Check backend health on mount
+  // Check backend health and load examples on mount
   useEffect(() => {
-    const checkBackend = async () => {
+    const init = async () => {
       try {
-        await compilationService.health();
-        setBackendStatus('connected');
-        setLogs(prev => [...prev, '[Backend] Connected to compilation server']);
+        const health = await compilationService.health();
+        if (health.status === 'ok') {
+          if (health.mode === 'server') {
+            setBackendStatus('connected');
+            setLogs(prev => [...prev, '[Backend] Connected to compilation server']);
+          } else {
+            setBackendStatus('static');
+            setLogs(prev => [...prev, '[Backend] Running in static mode (no server): using pre-generated SystemVerilog and in-browser verification']);
+          }
+
+          const modules = await compilationService.getExamples();
+          setAvailableModules(modules);
+
+          if (modules.includes("PWMLEDAXI")) {
+            handleModuleChange("PWMLEDAXI");
+          } else if (modules.length > 0) {
+            handleModuleChange(modules[0]);
+          }
+        } else {
+          setBackendStatus('disconnected');
+          setLogs(prev => [...prev, `[Backend] Warning: Compilation server unavailable - ${health.error}`]);
+        }
       } catch (error) {
         setBackendStatus('disconnected');
         setLogs(prev => [...prev, `[Backend] Warning: Compilation server offline - ${error.message}`]);
       }
     };
-    checkBackend();
+    init();
   }, []);
 
-  const handleModuleChange = (modName) => {
+  const handleModuleChange = async (modName) => {
     setSelectedModule(modName);
     setModuleName(modName);
-    setCode(EXAMPLES[modName].chisel);
-    setVerilog("// Click 'Elaborate' to generate Verilog");
-    setIsVerilogModified(false);
-    setVerificationResult(null);
-    setLogs([]);
-    setStatus("Ready");
+    setStatus("Loading...");
     
-    // Load EBMC parameters if they exist for this module
-    if (EXAMPLES[modName].ebmcParams) {
-      setEbmcParams(EXAMPLES[modName].ebmcParams);
-      setLogs(prev => [...prev, `[Config] Loaded EBMC parameters for ${modName}`]);
-    } else {
-      setEbmcParams({});
+    try {
+        const content = await compilationService.getExample(modName);
+        setCode(content);
+        setVerilog("// Click 'Elaborate' to generate Verilog");
+        setIsVerilogModified(false);
+        setVerificationResult(null);
+        setLogs([]);
+        setStatus("Ready");
+        setEbmcParams({}); // Reset params as server doesn't provide them yet
+    } catch (e) {
+        setLogs(prev => [...prev, `[Error] Failed to load module ${modName}: ${e.message}`]);
+        setStatus("Error");
     }
   };
 
@@ -84,8 +105,8 @@ function App() {
   };
 
   const handleCompile = async () => {
-    if (backendStatus !== 'connected') {
-      setLogs(prev => [...prev, '[Error] Backend server not available']);
+    if (backendStatus === 'disconnected') {
+      setLogs(prev => [...prev, '[Error] Compilation unavailable (no backend, and static mode not initialized)']);
       return;
     }
 
@@ -123,6 +144,8 @@ function App() {
       return;
     }
     
+    let currentVerilog = verilog;
+
     // If Verilog is modified, skip compilation to preserve changes
     if (!isVerilogModified) {
       setLogs([`Compiling ${moduleName}...`]);
@@ -140,6 +163,7 @@ function App() {
         setLogs(prev => [...prev, '[Compiler] ✓ Compiled, verifying...']);
         if (compileResult.verilog) {
           setVerilog(compileResult.verilog);
+          currentVerilog = compileResult.verilog;
           setIsVerilogModified(false);
         }
       } catch (error) {
@@ -165,8 +189,8 @@ function App() {
     }
 
     try {
-        // Pass verilog code if modified
-        const response = await compilationService.verify(moduleName, ebmcParams, isVerilogModified ? verilog : null);
+        // Pass verilog code
+        const response = await compilationService.verify(moduleName, ebmcParams, currentVerilog);
         
         if (response.success) {
             const { results, stdout, stderr, vcdFile: generatedVcd, exitCode } = response;
@@ -276,6 +300,13 @@ function App() {
           <button className="p-2 hover:bg-neutral-700 rounded-md transition-colors text-gray-400 hover:text-white">
             <Save className="w-5 h-5" />
           </button>
+          <button 
+            onClick={() => window.runDebugFlow && window.runDebugFlow()}
+            className="p-2 hover:bg-neutral-700 rounded-md transition-colors text-purple-400 hover:text-purple-200"
+            title="Run Debug Flow"
+          >
+            <Activity className="w-5 h-5" />
+          </button>
           <div className="h-6 w-px bg-neutral-600 mx-2"></div>
           
           {/* View Switcher */}
@@ -368,7 +399,7 @@ function App() {
             <div className="flex-1 overflow-hidden">
               {activeTab === 'modules' ? (
                 <div className="h-full p-2 overflow-y-auto">
-                  {Object.keys(EXAMPLES).map(mod => (
+                  {availableModules.map(mod => (
                     <div 
                       key={mod}
                       onClick={() => handleModuleChange(mod)}

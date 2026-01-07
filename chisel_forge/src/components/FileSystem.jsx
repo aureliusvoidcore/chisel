@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { File, Folder, RefreshCw, Download, Eye } from 'lucide-react';
+import { File, RefreshCw, Eye } from 'lucide-react';
+import compilationService from '../api';
 
 const FileSystem = ({ onFileSelect }) => {
   const [files, setFiles] = useState([]);
@@ -8,9 +9,13 @@ const FileSystem = ({ onFileSelect }) => {
   const fetchFiles = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/fs/list');
-      const data = await response.json();
-      setFiles(data);
+      const all = await compilationService.listFiles();
+      const paths = (all || [])
+        .map((f) => (typeof f === 'string' ? f : f?.path))
+        .filter(Boolean);
+      // Show only verification artifacts by default
+      const filtered = paths.filter(p => p.startsWith('/verification/'));
+      setFiles(filtered.length ? filtered : paths);
     } catch (error) {
       console.error('Failed to fetch files:', error);
     } finally {

@@ -4,7 +4,9 @@ This is the source for the GitHub Pages user site at:
 
 https://aureliusvoidcore.github.io
 
-The site is built with Jekyll; layouts live under `_layouts/`, pages under `pages/`, and posts under `_posts/`.
+The site is built with Jekyll; layouts live under `_layouts/` and pages under `pages/`.
+
+The published site is organized as a set of section pages (e.g., Formal Verification, FPGA, SystemC, Mathematics) with interactive WebAssembly tools under `pages/`.
 
 ## Local development
 
@@ -35,28 +37,29 @@ bundle exec jekyll serve
 
 ## Themes
 
-The site includes multiple themes selectable from the on-page Theme Manager (top-right control panel):
+The site includes multiple visual themes selectable from the on-page Appearance panel:
 
-- Neon Cyberpunk (default)
-- Anime Matrix
-- Rainbow Sweep
-- Laser Beam
+- Default
+- Neon
+- Matrix
+- Spectrum
+- Laser
 - Amber Terminal
-- Synthwave
+- Synth
 - ROG Crimson
 - Windows 98
 - Amiga Workbench
 - Macintosh Classic
-- Doom (Classic-inspired)
+- High-effects theme
 
-The Doom theme has additional styling in `assets/css/doom.css`, scoped to `body.theme-doom` so other themes are unaffected. The base theme system and animations are driven by `assets/js/main.js` and `assets/css/main.css`.
+The high-effects theme has additional styling in `assets/css/doom.css`, scoped to `body.theme-doom` so other themes are unaffected. The base theme system and animations are driven by `assets/js/main.js` and `assets/css/main.css`.
 
 Notes
 - This repo is the root/base of the user site, so `baseurl` is empty and `url` is set to https://aureliusvoidcore.github.io in `_config.yml`.
 - Site structure overview:
 	- Layouts: `_layouts/`
 	- Pages: `pages/`
-	- Posts: `_posts/`
+	- Interactive apps: `abc_build/`, `hwcbmc_build/`, `chisel_forge/`
 
 ## WebAssembly integrations
 
